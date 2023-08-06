@@ -13,7 +13,7 @@
       groups = [
 
       ];
-      peers = [
+      connections = [
         { group = "everyoneConnectsToMe"; }
       ];
       privateKeyFile = "/not/yet";
@@ -28,7 +28,7 @@
       groups = [
 
       ];
-      peers = [
+      connections = [
         { group = "everyoneConnectsToMe"; }
         { group = "subnet one group"; }
       ];
@@ -46,7 +46,7 @@
         "everyoneConnectsToMe"
         "subnet two group"
       ];
-      peers = [
+      connections = [
         { group = "everyoneConnectsToMe"; }
         { group = "subnet two group"; }
       ];
@@ -65,7 +65,7 @@
         "everyoneConnectsToMe"
         "subnet two group"
       ];
-      peers = [
+      connections = [
         { group = "everyoneConnectsToMe"; }
         { group = "subnet two group"; }
       ];
@@ -82,7 +82,7 @@
       groups = [
         
       ];
-      peers = [
+      connections = [
         { group = "everyoneConnectsToMe"; }
         { peer = "peer.one"; }
       ];
