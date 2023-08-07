@@ -37,11 +37,35 @@ let
         '';
       };
       name = mkOption {
-        default = config.networking.hostName;
-        defaultText = literalExpression "hostName";
         example = "bernd";
         type = types.str;
         description = mdDoc "Unique name for the peer (must be unique for all subdomains this peer is a member of)";
+      };
+      endpoints = mkOption {
+        example = ''
+          [
+          {match = {}; ip = "192.168.1.10"; port = 51820;} # default case            
+          {match = {group = "location1"; subnet = "lanNet";}; ip = "192.168.1.10"; port = 51820; }
+          {match = {peer = "offSitePeer1";}; ip = "123.123.123.123"; port = 51825; persistentKeepalive = 15;}
+          ];
+        '';
+        type = with types; listOf attrset;
+        description = mdDoc ''
+          The endpoints clients use to reach this host with rules to match by
+          group name `match = {group = "groupName";};`
+          peer name `match = {peer = "peerName";};`
+          or a default match at the end `match = {};`
+          All rules in `match` must be true for a match to happen.
+          Multiple matches will be merged top to bottom, so rules at the top
+          should be your most general rules which get overridden. 
+          Values other than `match` specify options for the connection,
+          possible values are:  
+          - ip  
+          - port  
+          - persistentKeepalive  
+          - dynamicEndpointRefreshSeconds  
+          - dynamicEndpointRefreshRestartSeconds  
+        '';
       };
       publicKey = mkOption {
         example = "xTIBA5rboUvnH4htodjb6e697QjLERt1NAB4mZqp8Dg=";
@@ -69,6 +93,14 @@ let
         type = types.str;
         description = mdDoc "Unique name for the subnet";
       };
+      defaultPort = mkOption {
+        example = 51820;
+        type = types.int;
+        description = mdDoc ''
+          The port peers will use when communicating over this subnet.
+          Currently there is no way to set the ports for peers individually.
+        '';
+      };
     };
   };
   configOpts = {
@@ -77,14 +109,14 @@ let
         default = {};
         type = with types; listOf (submodule subnetOpts);
         description = ''
-          Shared configuration file that describes all clients 
+          Subnets in the mesh network(s)
         '';
       };
       peers = mkOption {
         default = {};
         type = with types; listOf (submodule peerOpts);
         description = ''
-          Shared configuration file that describes all clients 
+          Peers in the mesh network(s)
         '';
       };
     };
@@ -92,12 +124,22 @@ let
 in
 {
   options = {
-    modules.wirenix = {
+    wirenix = {
       enable = mkOption {
         default = true;
         type = with lib.types; bool;
         description = ''
           Wirenix
+        '';
+      };
+      peerName = mkOption {
+        default = config.networking.hostName;
+        defaultText = literalExpression "hostName";
+        example = "bernd";
+        type = types.str;
+        description = mdDoc ''
+          Name of the peer using this module, to match the name in
+          `wirenix.config.peers.*.name`
         '';
       };
       config = mkOption {

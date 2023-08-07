@@ -1,12 +1,18 @@
 {
+  version = "1";
   subnets = [
-    { name = "subnet.one"; }
-    { name = "subnet.two"; }
-    { name = "subnet.three"; }
+    { name = "subnet.one"; defaultPort = 51820; }
+    { name = "subnet.two"; defaultPort = 51821; }
+    { name = "subnet.three"; defaultPort = 51822; }
   ];
   peers = [
     {
       name = "peer.zero";
+      endpoints = [
+        {match = {group = "subnet two group";}; ip = "1.1.1.1"; port = 51820;}
+        {match = {peer = "peer.one";}; ip = "2.2.2.2"; port = 51820;}
+        {match = {}; ip = "3.3.3.3"; port = 51820;}
+      ];
       subnets = [
         
       ];
@@ -22,6 +28,11 @@
     }
     {
       name = "peer.one";
+      endpoints = [
+        {match = {group = "subnet two group";}; ip = "1.1.1.1"; port = 51820; persistentKeepalive = 15;}
+        {match = {peer = "peer.one";}; ip = "2.2.2.2"; port = 51820;}
+        {match = {}; ip = "3.3.3.3"; port = 51820;}
+      ];
       subnets = [
         "subnet.one"
       ];
@@ -38,6 +49,11 @@
     }
     {
       name = "peer.two";
+      endpoints = [
+        {match = {group = "subnet two group";}; ip = "1.1.1.1"; port = 51820;}
+        {match = {peer = "peer.one";}; ip = "2.2.2.2"; port = 51820;}
+        {match = {}; ip = "3.3.3.3"; port = 51820;}
+      ];
       subnets = [
         "subnet.one"
         "subnet.two"
@@ -56,6 +72,11 @@
     }
     {
       name = "peer.three";
+      endpoints = [
+        {match = {group = "subnet two group";}; ip = "1.1.1.1"; port = 51820;}
+        {match = {peer = "peer.one";}; ip = "2.2.2.2"; port = 51820;}
+        {match = {}; ip = "3.3.3.3"; port = 51820;}
+      ];
       subnets = [
         "subnet.one"
         "subnet.two"
@@ -75,6 +96,11 @@
     }
     {
       name = "peer.four";
+      endpoints = [
+        {match = {group = "subnet two group";}; ip = "1.1.1.1"; port = 51820;}
+        {match = {peer = "peer.one";}; ip = "2.2.2.2"; port = 51820;}
+        {match = {}; ip = "3.3.3.3"; port = 51820;}
+      ];
       subnets = [
         "subnet.three"
         "subnet.one"
