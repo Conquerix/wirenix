@@ -1,5 +1,4 @@
-
-{config, lib, ...}: 
+{config, lib, ...}: intermediateConfig: 
 with lib.trivial;
 with lib.attrsets;
 with lib.lists;
@@ -7,25 +6,23 @@ with lib;
 let
   # check whether or not agenix-rekey exists
   has-rekey = config ? rekey;
-  # The remapper transforms the config in a way that makes filling out configs more easy
-  remapper = import ./config-remapper.nix {inherit lib;} config.modules.wirenix.config;
-  thisPeer = remapper.peerFromName config.wirenix.peerName;
+  thisPeer = intermediateConfig.peers."${config.wirenix.peerName}";
   # these aren't really important, I just wanted to reverse the argument order
-  forEachAttr = flip mapAttrs'; 
+  forEachAttr' = flip mapAttrs'; 
   forEachAttrToList = flip mapAttrsToList; 
 in
 {
   networking.wireguard = {
-    interfaces = forEachAttr thisPeer.subnets (name: subnetConnection:  { name = "wg-${name}";
+    interfaces = forEachAttr' thisPeer.subnetConnections (name: subnetConnection:  { name = "wg-${name}";
       value = {
-        ips = [ subnetConnection.ip ];
-        listenPort = subnetConnection.subnet.defaultPort;
+        ips = subnetConnection.ipAddresses;
+        listenPort = subnetConnection.listenPort;
         privateKeyFile = thisPeer.privateKeyFile;        
-        peers = forEachAttrToList subnetConnection.peers (peerName: peerConnection: mkMerge [
+        peers = forEachAttrToList subnetConnection.peerConnections (peerName: peerConnection: mkMerge [
           {
             name = peerName;
             publicKey = peerConnection.peer.publicKey;
-            allowedIPs = [ peerConnection.ip ];
+            allowedIPs = peerConnection.ipAddresses;
             endpoint = "${peerConnection.endpoint.ip}:${peerConnection.endpoint.port}";
           }
           mkIf (peerConnection.endpoint ? persistentKeepalive) {
