@@ -3,7 +3,7 @@
 
   outputs = { self, ... }:
   {
-    lib = import ./lib.nix;
-    nixosModules.myModule = import ./wire.nix;
+    wirenix.lib = import ./lib.nix;
+    nixosModules.default = import ./wire.nix;
   };
 }

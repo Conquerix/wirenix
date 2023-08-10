@@ -3,6 +3,17 @@ with builtins;
 ACL independent functions that can be used in parsers.
 */
 rec {
+  /** Builtin Parsers */
+  defaultParsers = {
+    v1 = import ./parsers/v1.nix;
+  };
+  /** Builtin configurers */
+  defaultConfigurers = rec {
+    auto = static; # TODO: make smart
+    static = import ./configurers/static.nix;
+    networkd = import ./configurers/networkd.nix;
+    networkmanager = import ./configurers/networkmanager.nix;
+  };
   /** listOfSetsToSetByKey :: string -> list -> attrSet
   * Example: 
   * listOfSetsToSetByKey "primary" [ {primary = "foo"; secondary = 1; tertiary = "one"} {primary = "bar"; secondary = 2; tertiary = "two"} ]
@@ -15,7 +26,7 @@ rec {
         value = removeAttrs item [ key ];
       }) list
     );
-  /**  */
+  /** Like listOfSetsToSetByKey, but also performs a map before dropping the key */
   mapListOfSetsToSetByKey = key: function: list: 
     mapAttrs (name: value: removeAttrs (function value) [key]) (
       listToAttrs (

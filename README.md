@@ -97,6 +97,8 @@ type peer = {
     ipAddresses?: str[];
     extraArgs?: any;
   };
+  publicKey: string;
+  privateKeyFile: string; 
   groups?: str[];
   endpoints?: endpoint[];
   extraArgs?: any;

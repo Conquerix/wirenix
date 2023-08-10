@@ -1,5 +1,6 @@
 { config, lib, ... }@inputs: 
 with lib;
+with import ./lib.nix;
 {
   options = {
     wirenix = {
@@ -58,15 +59,8 @@ with lib;
   
   config =
   let
-    configurers = rec {
-      auto = static;
-      static = import ./configurers/static.nix;
-      networkd = import ./configurers/networkd.nix;
-      networkmanager = import ./configurers/networkmanager.nix;
-    } // config.modules.wirenix.additionalConfigurers;
-    parsers = {
-      v1 = import ./parsers/v1.nix;
-    } // config.modules.wirenix.additionalParsers;
+    configurers = defaultConfigurers // config.modules.wirenix.additionalConfigurers;
+    parsers = defaultParsers // config.modules.wirenix.additionalParsers;
     acl = config.modules.wirenix.aclConfig;
     parser = parsers."${acl.version}" inputs;
     configurer = configurers."${config.modules.wirenix.configurer}" inputs;
