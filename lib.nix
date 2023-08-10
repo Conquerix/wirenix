@@ -10,13 +10,21 @@ rec {
   */
   listOfSetsToSetByKey = key: list: 
     listToAttrs (
-      forEach list (elem: {
-        name = elem."${key}";
-        value = removeAttrs elem [ key ];
-      })
+      map (item: {
+        name = item."${key}";
+        value = removeAttrs item [ key ];
+      }) list
     );
   /**  */
-  mapListOfSetsToSetByKey = function: list: mapAttrs (name: value: function value) (listOfSetsToSetByKey list);
+  mapListOfSetsToSetByKey = key: function: list: 
+    mapAttrs (name: value: removeAttrs (function value) [key]) (
+      listToAttrs (
+        map (item: {
+          name = item."${key}";
+          value = item;
+        }) list
+      )
+    );
   /** adds colons to a string every 4 characters for IPv6 shenanigans */
   addColonsToIPv6 = string: 
     if ((stringLength string) > 4) 

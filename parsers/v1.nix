@@ -7,7 +7,7 @@ with builtins;
 let
   /** parsePeer :: acl_peer -> ic_peer */
   parsePeer = acl_peer: {
-      subnetConnections = listOfSetsToSetByKey "name" (pipeMap [subnetFromName (getSubnetConnectionAndName acl_peer)] acl_peer.subnets);
+      subnetConnections = listOfSetsToSetByKey "name" (pipeMap [subnetFromName (getSubnetConnectionAndName acl_peer)] (attrNames acl_peer.subnets));
       publicKey = acl_peer.publicKey;
       privateKeyFile = acl_peer.privateKeyFile;
     } //
@@ -20,12 +20,12 @@ let
   
   /** parseGroup :: acl_group -> ic_group */
   parseGroup = acl_group: {
-    peers = mapListOfSetsToSetByKey parsePeer (selectPeers [{type="group"; rule="is"; value="${acl_group.name}";}]);
+    peers = mapListOfSetsToSetByKey "name" parsePeer (selectPeers [{type="group"; rule="is"; value="${acl_group.name}";}]);
   } // (if acl_group ? extraArgs then {extraArgs = acl_group.extraArgs;} else {});
   
   /** parseSubnet :: acl_subnet -> ic_subnet */
   parseSubnet = acl_subnet: {
-    peers = mapListOfSetsToSetByKey parsePeer (selectPeers [{type="subnet"; rule="is"; value="${acl_subnet.name}";}]);
+    peers = mapListOfSetsToSetByKey "name" parsePeer (selectPeers [{type="subnet"; rule="is"; value="${acl_subnet.name}";}]);
   } // (if acl_subnet ? extraArgs then {extraArgs = acl_subnet.extraArgs;} else {});
   
   /** getSubnetConnection :: acl_peer -> acl_subnet -> (subnetConnection // {name}) */
@@ -48,7 +48,7 @@ let
   /** getPeerConnections :: acl_peer -> acl_subnet -> str -> peerConnection */
   getPeerConnections = acl_peerFrom: acl_subnet:
     let
-      filterSubnets   = connection: elem acl_subnet.name connection.subnets;
+      filterSubnets   = connection: !(connection ? subnets) || elem acl_subnet.name connection.subnets;
       filterPeer      = key: acl_peer: connection: elem acl_peer.name (catAttrs "name" (selectPeers connection."${key}"));
       getConnectionsX = key: filter (connection: all (x: x connection) [filterSubnets (filterPeer key acl_peerFrom)]) v1_acl.connections;
       getConnectionsA = getConnectionsX "a";
@@ -63,20 +63,32 @@ let
         foldl' mergeAttrs {} extraArgsList;
     in 
     listOfSetsToSetByKey "name" (map (acl_peerTo:
+    let
+      extraArgs = getExtraArgs acl_peerTo;
+    in
     {
       name = acl_peerTo.name;
       peer = parsePeer acl_peerTo;
       ipAddresses = getIpAddresses acl_peerTo acl_subnet;
-      endpoint = getEndpoint acl_peerFrom acl_peerTo;
-      extraArgs = getExtraArgs acl_peerTo;
-    }) allOtherPeers);
+      endpoint = getEndpoint acl_subnet acl_peerFrom acl_peerTo;
+    } // (if extraArgs == {} then {} else {inherit extraArgs;})
+    ) allOtherPeers);
   
   /** getEndpoint :: acl_peer -> acl_peer -> ic_endpoint */
-  getEndpoint = acl_peerFrom: acl_peerTo: 
+  getEndpoint = acl_subnet: acl_peerFrom: acl_peerTo:
     let
-      getAllEndpointMatches = filter (endpoint: elem acl_peerFrom.name (catAttrs "name" (selectPeers (if endpoint ? match then endpoint.match else [])))) acl_peerTo.endpoints;
+      peersForEndpoint = endpoint: catAttrs "name" (selectPeers (if endpoint ? match then endpoint.match else []));
+      allPeerEndpoints = if acl_peerTo ? endpoints then
+          (filter (endpoint: elem acl_peerFrom.name (peersForEndpoint endpoint)) acl_peerTo.endpoints)
+        else [];
+      allGroupEndpoints = concatMap (acl_group: acl_group.endpoints) (intersectLists 
+        (if acl_peerTo ? groups then acl_peerTo.groups else [])
+        (if acl_peerFrom ? groups then acl_peerTo.groups else [])
+      );
+      allSubnetEndpoints = acl_subnet.endpoints;
+      allEndpointMatches = allSubnetEndpoints ++ allGroupEndpoints ++ allPeerEndpoints;
     in
-    removeAttrs (foldl' mergeAttrs {} getAllEndpointMatches) [ "match" ];
+    removeAttrs (foldl' mergeAttrs {} allEndpointMatches) [ "match" ];
   
   /** selectPeers :: [acl_filters] -> str -> [acl_peer]
    * (str -> ic_peer) means it returns an attrset of peers keyed by name, typescript syntax:
@@ -87,7 +99,7 @@ let
     then 
       v1_acl.peers
     else
-      foldl' intersectAttrs (selectPeersSingleFilter (head acl_filters)) (map selectPeersSingleFilter acl_filters);
+      foldl' intersectLists (selectPeersSingleFilter (head acl_filters)) (map selectPeersSingleFilter acl_filters);
     
   /** selectPeersSingleFilter :: acl_filter -> [acl_peer] */
   selectPeersSingleFilter = acl_filter:
@@ -118,7 +130,7 @@ let
   
 in
 {
-  peers = mapListOfSetsToSetByKey parsePeer v1_acl.peers;
-  subnets = mapListOfSetsToSetByKey parseSubnet v1_acl.subnets;
-  groups = mapListOfSetsToSetByKey parseGroup v1_acl.groups;
+  peers = mapListOfSetsToSetByKey "name" parsePeer v1_acl.peers;
+  subnets = mapListOfSetsToSetByKey "name" parseSubnet v1_acl.subnets;
+  groups = mapListOfSetsToSetByKey "name" parseGroup v1_acl.groups;
 }

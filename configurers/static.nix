@@ -1,12 +1,10 @@
-{config, lib, ...}: intermediateConfig: 
+{lib, ...}: intermediateConfig: peerName:
 with lib.trivial;
 with lib.attrsets;
 with lib.lists;
 with lib;
 let
-  # check whether or not agenix-rekey exists
-  has-rekey = config ? rekey;
-  thisPeer = intermediateConfig.peers."${config.wirenix.peerName}";
+  thisPeer = intermediateConfig.peers."${peerName}";
   # these aren't really important, I just wanted to reverse the argument order
   forEachAttr' = flip mapAttrs'; 
   forEachAttrToList = flip mapAttrsToList; 
