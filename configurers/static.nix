@@ -8,6 +8,7 @@ let
   # these aren't really important, I just wanted to reverse the argument order
   forEachAttr' = flip mapAttrs'; 
   forEachAttrToList = flip mapAttrsToList; 
+  mergeIf = attr: key: if builtins.hasAttr key attr then {"${key}" = attr."${key}";} else {};
 in
 {
   networking.wireguard = {
@@ -16,23 +17,17 @@ in
         ips = subnetConnection.ipAddresses;
         listenPort = subnetConnection.listenPort;
         privateKeyFile = thisPeer.privateKeyFile;        
-        peers = forEachAttrToList subnetConnection.peerConnections (peerName: peerConnection: mkMerge [
+        peers = forEachAttrToList subnetConnection.peerConnections (peerName: peerConnection: 
           {
             name = peerName;
             publicKey = peerConnection.peer.publicKey;
             allowedIPs = peerConnection.ipAddresses;
-            endpoint = "${peerConnection.endpoint.ip}:${peerConnection.endpoint.port}";
-          }
-          mkIf (peerConnection.endpoint ? persistentKeepalive) {
-            persistentKeepalive = peerConnection.endpoint.persistentKeepalive;
-          }
-          mkIf (peerConnection.endpoint ? dynamicEndpointRefreshSeconds) {
-            dynamicEndpointRefreshSeconds = peerConnection.endpoint.dynamicEndpointRefreshSeconds;
-          }
-          mkIf (peerConnection.endpoint ? dynamicEndpointRefreshRestartSeconds) {
-            dynamicEndpointRefreshRestartSeconds = peerConnection.endpoint.dynamicEndpointRefreshRestartSeconds;
-          }
-        ]);
+            endpoint = "${peerConnection.endpoint.ip}:${builtins.toString peerConnection.endpoint.port}";
+          } //
+          (mergeIf peerConnection.endpoint "persistentKeepalive") //
+          (mergeIf peerConnection.endpoint "dynamicEndpointRefreshSeconds") //
+          (mergeIf peerConnection.endpoint "dynamicEndpointRefreshRestartSeconds")
+        );
       };}
     );
   };

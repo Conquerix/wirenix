@@ -1,6 +1,5 @@
 {
-  description = "Do we have agnenix-rekey?";
-
+  description = "A wireguard network creation tool";
   outputs = { self, ... }:
   {
     wirenix.lib = import ./lib.nix;

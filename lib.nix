@@ -67,4 +67,24 @@ rec {
   
   /** generates a full IPv6 address */
   generateIPv6Address = subnetName: peerName: (addColonsToIPv6 ((generateIPv6Prefix subnetName) + (generateIPv6Suffix peerName))) + "/80";
+  
+  /** 
+   * makes the intermediate config non-recursive, so it can be pretty printed and
+   * inspected in the repl. Also helps with testing as it forces evaluation of the config.
+   */
+  breakIntermediateRecursion = intermediateConfig:
+    let recurse = parentName:
+    mapAttrs (name: value:
+      if typeOf value == "set" then 
+        if elem name [ "peer" "subnet" "group" "groups" ] then
+          "${name}s.${parentName}"
+        else if elem parentName ["peers"] then
+          "${parentName}.${name}"
+        else
+          recurse name value
+      else
+      value
+    );
+    in
+    mapAttrs (name: value: recurse "" value) intermediateConfig;
 }

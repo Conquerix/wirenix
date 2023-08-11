@@ -66,5 +66,5 @@ with import ./lib.nix;
     configurer = configurers."${config.modules.wirenix.configurer}" inputs;
   in
   lib.mkIf (config.modules.wirenix.enable) 
-    configurer (parser acl);
+    configurer (parser acl) config.modules.wirenix.peerName;
 }

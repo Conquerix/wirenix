@@ -16,7 +16,7 @@ let
       publicKey = acl_peer.publicKey;
       privateKeyFile = acl_peer.privateKeyFile;
     } //
-    (if acl_peer ? groups then {groups = map groupFromName acl_peer.groups;} else {groups = [];});
+    (if acl_peer ? groups then {groups = map groupFromName acl_peer.groups;} else {groups = {};});
   
   /** parseGroup :: acl_group -> ic_group */
   parseGroup = acl_group: {
@@ -32,18 +32,18 @@ let
   getSubnetConnectionAndName = acl_peer: acl_subnet: {
     name = acl_subnet.name; # name gets removed shortly after, name is not in the actual subnetConnection object
     subnet = parseSubnet acl_subnet;
-    ipAddresses = getIpAddresses acl_peer acl_subnet;
+    ipAddresses = getIpAddresses acl_subnet acl_peer;
     listenPort = acl_peer.subnets."${acl_subnet.name}".listenPort;
     peerConnections = getPeerConnections acl_peer acl_subnet;
   } // (if acl_peer.subnets."${acl_subnet.name}" ? extraArgs then {extraArgs = acl_peer.subnets."${acl_subnet.name}".extraArgs;} else {});
   
   /** getIpAddresses :: acl_peer -> acl_subnet -> [str] */
-  getIpAddresses = acl_peer: acl_subnet: 
+  getIpAddresses = acl_subnet: acl_peer: 
     if (acl_peer.subnets."${acl_subnet.name}" ? ipAddresses) then (
       if (elem "auto" acl_peer.subnets."${acl_subnet.name}".ipAddresses) then (
-        (remove "auto" acl_peer.subnets."${acl_subnet.name}".ipAddresses) ++ (singleton (generateIPv6Address acl_peer.name acl_subnet.name))
+        (remove "auto" acl_peer.subnets."${acl_subnet.name}".ipAddresses) ++ (singleton (generateIPv6Address acl_subnet.name acl_peer.name))
       ) else acl_peer.subnets."${acl_subnet.name}".ipAddresses
-    ) else (singleton (generateIPv6Address acl_peer.name acl_subnet.name));
+    ) else (singleton (generateIPv6Address acl_subnet.name acl_peer.name));
   
   /** getPeerConnections :: acl_peer -> acl_subnet -> str -> peerConnection */
   getPeerConnections = acl_peerFrom: acl_subnet:
@@ -69,7 +69,7 @@ let
     {
       name = acl_peerTo.name;
       peer = parsePeer acl_peerTo;
-      ipAddresses = getIpAddresses acl_peerTo acl_subnet;
+      ipAddresses = getIpAddresses acl_subnet acl_peerTo;
       endpoint = getEndpoint acl_subnet acl_peerFrom acl_peerTo;
     } // (if extraArgs == {} then {} else {inherit extraArgs;})
     ) allOtherPeers);
@@ -133,4 +133,4 @@ in
   peers = mapListOfSetsToSetByKey "name" parsePeer v1_acl.peers;
   subnets = mapListOfSetsToSetByKey "name" parseSubnet v1_acl.subnets;
   groups = mapListOfSetsToSetByKey "name" parseGroup v1_acl.groups;
-}
+} // (if v1_acl ? extraArgs then {extraArgs = v1_acl.extraArgs;} else {})
