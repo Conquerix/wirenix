@@ -160,14 +160,6 @@ modules.wirenix.additionalParsers = {
 }
 ```
 
-and then in your acl, set the version:  
-  
-```nix
-...
-version = "myConfigurer";
-...
-```
-
 ## Intermediate Configuration
 The Intermediate Configuration is a recursive attrset that is more suited for
 being used in a NixOS configuration than the ACL Configuration.  
@@ -280,6 +272,15 @@ or for your own module:
 modules.wirenix.additionalConfigurers.myConfigurer = import ./my-parser.nix;
 modules.wirenix.configurer = "myConfigurer";
 ```
+
+And then, in your ACL, set the version:  
+  
+```nix
+...
+version = "myConfigurer";
+...
+```
+
 
 # Troubleshooting
 Wirenix tries to stay seperated from the inner working of your config for as
