@@ -28,6 +28,5 @@ let secretsDir = peerName: (nixosConfigForPeer nixosConfigurations peerName).con
   };
   getPeerPubKey    = otherPeerName: lib.removeSuffix ".age" ((secretsDir otherPeerName).config.secrets."wirenix-peer-${peerName}".path) + ".pub";
   getPrivKeyFile   = config.age.secrets."wirenix-peer-${peerName}".path;
-  getPubKey        = lib.removeSuffix ".age" (config.age.secrets."wirenix-peer-${peerName}".path) + ".pub";
   getSubnetPSKFile = subnetName: config.age.secrets."wirenix-subnet-${subnetName}".path;
 }

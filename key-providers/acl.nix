@@ -1,10 +1,10 @@
-{lib, ...}: intermediateConfig:
+{lib, ...}: intermediateConfig: peerName:
 with import ../lib.nix;
 with lib.attrsets;
 with builtins;
 {
   config = {};
-  getPeerPubKey = peerName: attrByPath [peerName "publicKey"] null intermediateConfig.peers;
-  getPeerPrivKeyFile = peerName: attrByPath [peerName "privateKeyFile"] null intermediateConfig.peers;
-  getSubnetPSK = subnetName: attrByPath [subnetName "presharedKeyFile"] null intermediateConfig.subnets;
+  getPeerPubKey = otherPeerName: attrByPath [otherPeerName "publicKey"] null intermediateConfig.peers;
+  getPrivKeyFile = attrByPath [peerName "privateKeyFile"] null intermediateConfig.peers;
+  getSubnetPSKFile = subnetName: attrByPath [subnetName "presharedKeyFile"] null intermediateConfig.subnets;
 }
