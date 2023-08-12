@@ -333,7 +333,8 @@ $ echo -e "paste the big text result from nix repl in here"
 ```
 
 # Integrations:
-By default, WireNix supports setting wireguard keypairs with agenix-rekey.
+By default, WireNix supports setting wireguard keypairs with
+[agenix-rekey](https://github.com/oddlama/agenix-rekey).
 WireNix also supports networkd, network manager, and the nixos static network
 configuration (default).  
 

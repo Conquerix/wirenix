@@ -12,7 +12,12 @@ rec {
     auto = static; # TODO: make smart
     static = import ./configurers/static.nix;
     networkd = import ./configurers/networkd.nix;
-    networkmanager = import ./configurers/networkmanager.nix;
+    network-manager = import ./configurers/networkmanager.nix;
+  };
+  /** Builtin key providers */
+  defaultKeyProviders = {
+    acl = import ./key-providers/acl.nix;
+    agenix-rekey = import ./key-providers/agenix-rekey.nix;
   };
   /** listOfSetsToSetByKey :: string -> list -> attrSet
   * Example: 
@@ -87,4 +92,11 @@ rec {
     );
     in
     mapAttrs (name: value: recurse "" value) intermediateConfig;
+    
+    nixosConfigForPeer = nixosConfigurations: peerName: builtins.head (builtins.attrValues (
+      lib.attrsets.filterAttrs (
+        name: value: (lib.attrsets.attrByPath ["config" "modules" "wirenix" "peerName"] null value) == peerName
+      ) nixosConfigurations));
+      
+    mergeIf = attr: key: if builtins.hasAttr key attr then {"${key}" = attr."${key}";} else {};
 }

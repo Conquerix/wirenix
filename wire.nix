@@ -22,27 +22,33 @@ with import ./lib.nix;
         '';
       };
       configurer = mkOption {
-        default = "auto";
-        type = types.str;
+        default = defaultConfigurers.static;
+        defaultText = literalExpression "wirenix.lib.defaultConfigurers.static";
+        type = with types;  functionTo (functionTo (functionTo (functionTo attrset)));
         description = mdDoc ''
-          Configurer to use. Builtin values can be "auto", "networkmanager", or "networkd".
-          See the `additionalConfigurers` for adding more options.
+          Configurer to use. Builtin values can be 
+          `wirenix.lib.defaultConfigurers.static`
+          `wirenix.lib.defaultConfigurers.networkd` or
+          `wirenix.lib.defaultConfigurers.network-manager`
+          Or you can put your own configurer here.
         '';
       };
-      additionalConfigurers = mkOption {
-        default = "auto";
-        type = with types; attrsOf (functionTo attrset);
+      keyProviders = mkOption {
+        default = [defaultKeyProviders.acl];
+        type = with types; listOf (functionTo attrset);
+        defaultText = literalExpression "[ wirenix.lib.defaultKeyProviders.acl ]";
         description = mdDoc ''
-          Additional configurers to load, with their names being used to select from the
-          configurer option.
+          List of key providers. Key providers will be queried in order.
+          Builtin providers are `wirenix.lib.defaultKeyProviders.acl`
+          and `wirenix.lib.defaultKeyProviders.agenix-rekey`. The latter
+          requires the agenix-rekey flake.
         '';
       };
       additionalParsers = mkOption {
-        default = "auto";
         type = with types; attrsOf (functionTo attrset);
         description = mdDoc ''
           Additional parsers to load, with their names being used to compare to the acl's
-          "version" feild.
+          "version" field.
         '';
       };
       aclConfig = mkOption {
@@ -52,6 +58,19 @@ with import ./lib.nix;
           Shared configuration file that describes all clients
         '';
       };
+      secretsDir = mkOption {
+        type = types.path;
+        description = mdDoc ''
+          If using a secrets manager, where you have wireguard secrets stored for the client.
+        '';
+      };
+      subnetSecretsDir = mkOption {
+        type = types.path;
+        description = mdDoc ''
+          If using a secrets manager, where you have wireguard secrets stored for subnets.
+          Needs to be the same on all clients.
+        '';
+      };
     };
   };
   
@@ -59,12 +78,12 @@ with import ./lib.nix;
   
   config =
   let
-    configurers = defaultConfigurers // config.modules.wirenix.additionalConfigurers;
     parsers = defaultParsers // config.modules.wirenix.additionalParsers;
     acl = config.modules.wirenix.aclConfig;
     parser = parsers."${acl.version}" inputs;
-    configurer = configurers."${config.modules.wirenix.configurer}" inputs;
+    configurer =  config.modules.wirenix.configurer inputs;
+    keyProviders =  config.modules.wirenix.keyProviders;
   in
   lib.mkIf (config.modules.wirenix.enable) 
-    configurer (parser acl) config.modules.wirenix.peerName;
+    configurer (parser acl) keyProviders config.modules.wirenix.peerName;
 }

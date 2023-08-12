@@ -8,25 +8,24 @@ let
   /** parsePeer :: acl_peer -> ic_peer */
   parsePeer = acl_peer: {
       subnetConnections = listOfSetsToSetByKey "name" (pipeMap [subnetFromName (getSubnetConnectionAndName acl_peer)] (attrNames acl_peer.subnets));
-      publicKey = acl_peer.publicKey;
-      privateKeyFile = acl_peer.privateKeyFile;
-    } //
-    (if acl_peer ? extraArgs then {extraArgs = acl_peer.extraArgs;} else {}) //
-    {
-      publicKey = acl_peer.publicKey;
-      privateKeyFile = acl_peer.privateKeyFile;
-    } //
-    (if acl_peer ? groups then {groups = map groupFromName acl_peer.groups;} else {groups = {};});
+    }
+    // mergeIf acl_peer "extraArgs"
+    // mergeIf acl_peer "publicKey"
+    // mergeIf acl_peer "privateKeyFile"
+    // (if acl_peer ? groups then {groups = map groupFromName acl_peer.groups;} else {groups = {};});     
   
   /** parseGroup :: acl_group -> ic_group */
   parseGroup = acl_group: {
     peers = mapListOfSetsToSetByKey "name" parsePeer (selectPeers [{type="group"; rule="is"; value="${acl_group.name}";}]);
-  } // (if acl_group ? extraArgs then {extraArgs = acl_group.extraArgs;} else {});
+  }
+  // mergeIf acl_group "extraArgs";
   
   /** parseSubnet :: acl_subnet -> ic_subnet */
   parseSubnet = acl_subnet: {
     peers = mapListOfSetsToSetByKey "name" parsePeer (selectPeers [{type="subnet"; rule="is"; value="${acl_subnet.name}";}]);
-  } // (if acl_subnet ? extraArgs then {extraArgs = acl_subnet.extraArgs;} else {});
+  }
+  // mergeIf acl_subnet "extraArgs"
+  // mergeIf acl_subnet "presharedKeyFile";
   
   /** getSubnetConnection :: acl_peer -> acl_subnet -> (subnetConnection // {name}) */
   getSubnetConnectionAndName = acl_peer: acl_subnet: {
@@ -35,8 +34,9 @@ let
     ipAddresses = getIpAddresses acl_subnet acl_peer;
     listenPort = acl_peer.subnets."${acl_subnet.name}".listenPort;
     peerConnections = getPeerConnections acl_peer acl_subnet;
-  } // (if acl_peer.subnets."${acl_subnet.name}" ? extraArgs then {extraArgs = acl_peer.subnets."${acl_subnet.name}".extraArgs;} else {});
-  
+  } 
+  // mergeIf (getAttr acl_subnet.name acl_peer.subnets) "extraArgs";
+    
   /** getIpAddresses :: acl_peer -> acl_subnet -> [str] */
   getIpAddresses = acl_subnet: acl_peer: 
     if (acl_peer.subnets."${acl_subnet.name}" ? ipAddresses) then (
@@ -133,4 +133,5 @@ in
   peers = mapListOfSetsToSetByKey "name" parsePeer v1_acl.peers;
   subnets = mapListOfSetsToSetByKey "name" parseSubnet v1_acl.subnets;
   groups = mapListOfSetsToSetByKey "name" parseGroup v1_acl.groups;
-} // (if v1_acl ? extraArgs then {extraArgs = v1_acl.extraArgs;} else {})
+} 
+// mergeIf v1_acl "extraArgs"
