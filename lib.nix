@@ -2,6 +2,17 @@ with builtins;
 /** 
 ACL independent functions that can be used in parsers.
 */
+let
+  # stubbornly not passing lib and reimplementing everything since 2023
+  findFirst = pred: default: list:
+    if length list == 0
+    then default
+    else
+      if pred (head list) 
+      then head list
+      else findFirst pred default (tail list);
+      
+in
 rec {
   /** Builtin Parsers */
   defaultParsers = {
@@ -97,6 +108,19 @@ rec {
       lib.attrsets.filterAttrs (
         name: value: (lib.attrsets.attrByPath ["config" "modules" "wirenix" "peerName"] null value) == peerName
       ) nixosConfigurations));
+      
+    getKeyProviderFuncs = keyProvidersUninitialized: inputs: intermediateConfig: peerName:
+    let
+      keyProviders = map (x: x inputs intermediateConfig peerName) keyProvidersUninitialized;
+    in
+    {
+      getPeerPubKey = otherPeerName: findFirst (x: x != null) (throw ("Wirenix: Could not find public key for " + otherPeerName))
+        (map (provider: provider.getPeerPubKey otherPeerName) keyProviders);
+      getPrivKeyFile = findFirst (x: x != null) (throw ("Wirenix: Could not find private key file for " + peerName))
+        (map (provider: provider.getPrivKeyFile) keyProviders);
+      getSubnetPSKFile = subnetName: findFirst (x: x != null) (null)
+        (map (provider: provider.getSubnetPSKFile subnetName) keyProviders);
+    };
       
     mergeIf = attr: key: if builtins.hasAttr key attr then {"${key}" = attr."${key}";} else {};
 }

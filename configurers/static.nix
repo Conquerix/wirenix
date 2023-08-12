@@ -10,14 +10,8 @@ let
   # these aren't really important, I just wanted to reverse the argument order
   forEachAttr' = flip mapAttrs'; 
   forEachAttrToList = flip mapAttrsToList; 
-  keyProvidersInit = map (x: x inputs intermediateConfig peerName) keyProviders;
-  getPeerPubKey = otherPeerName: findFirst (x: x != null) (throw "Wirenix: Could not find public key for " + otherPeerName)
-    (map (provider: provider.getPeerPubKey otherPeerName) keyProvidersInit);
-  getPrivKeyFile = findFirst (x: x != null) (throw "Wirenix: Could not find private key file for " + peerName)
-    (map (provider: provider.getPrivKeyFile) keyProvidersInit);
-  getSubnetPSKFile = subnetName: findFirst (x: x != null) (null)
-    (map (provider: provider.getSubnetPSKFile subnetName) keyProvidersInit);
 in
+with getKeyProviderFuncs keyProviders inputs intermediateConfig peerName;
 {
   networking.wireguard = {
     interfaces = forEachAttr' thisPeer.subnetConnections (subnetName: subnetConnection:  { name = "wn-${subnetName}";
