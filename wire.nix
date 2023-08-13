@@ -47,14 +47,14 @@ in
         type = types.str;
         description = mdDoc ''
           Configurer to use. Builtin values can be 
-          "static" "networkd" or "network-manager"
-          Or you can put your own configurer here.
+          "static" or "networkd". Or, you can put
+          your own configurer that you registered in
+          `additionalConfigurers` here.
         '';
       };
       keyProviders = mkOption {
         default = ["acl"];
         type = with types; listOf str;
-        defaultText = literalExpression "[ "acl" ]";
         description = mdDoc ''
           List of key providers. Key providers will be queried in order.
           Builtin providers are `wirenix.lib.defaultKeyProviders.acl`

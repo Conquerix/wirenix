@@ -27,7 +27,6 @@ rec {
   defaultConfigurers = {
     static = import ./configurers/static.nix;
     networkd = import ./configurers/networkd.nix;
-    network-manager = import ./configurers/networkmanager.nix;
   };
   /** Builtin key providers */
   defaultKeyProviders = {

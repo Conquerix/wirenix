@@ -19,8 +19,8 @@ in
 with getKeyProviderFuncs keyProviders inputs intermediateConfig peerName;
 {
   networking.wireguard = {
-    interfaces = forEachAttr' thisPeer.subnetConnections (subnetName: subnetConnection:  { name = "wn-${subnetName}";
-      value = {
+    interfaces = forEachAttr' thisPeer.subnetConnections (subnetName: subnetConnection: nameValuePair "wn-${subnetName}"
+      {
         ips = subnetConnection.ipAddresses;
         listenPort = subnetConnection.listenPort;
         privateKeyFile = getPrivKeyFile;        
@@ -36,7 +36,7 @@ with getKeyProviderFuncs keyProviders inputs intermediateConfig peerName;
           // (mergeIf peerConnection.endpoint "dynamicEndpointRefreshSeconds")
           // (mergeIf peerConnection.endpoint "dynamicEndpointRefreshRestartSeconds")
         );
-      };}
+      }
     );
   };
 } // getProviderConfig
