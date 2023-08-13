@@ -1,16 +1,32 @@
 { config, lib, ... }@inputs: 
 with lib;
 with import ./lib.nix;
+with builtins;
+let 
+  cfg = config.wirenix;
+  parsers = defaultParsers // cfg.additionalParsers;
+  configurers = defaultConfigurers // cfg.additionalConfigurers;
+  availableKeyProviders = defaultKeyProviders // cfg.additionalKeyProviders;
+  acl = cfg.aclConfig;
+  parser = parsers."${acl.version}" inputs;
+  configurer = (getAttr cfg.configurer configurers) inputs; #config.wirenix.configurer inputs;
+  keyProviders = map (providerName: getAttr providerName availableKeyProviders) cfg.keyProviders; # config.wirenix.keyProviders;
+  mkMergeTopLevel = names: attrs: attrsets.getAttrs names (
+    mapAttrs (k: v: mkMerge v) (attrsets.foldAttrs (n: a: [n] ++ a) [] attrs)
+  );
+  /** 
+   *  We can merge if we want to
+   *  We can leave your friends behind
+   * 'Cause your friends don't merge and if they don't merge
+   *  Well they're, no friends of mine.
+   */
+  safetyMerge = possibleTopLevelKeys: attrs: 
+    (mkMergeTopLevel possibleTopLevelKeys ((lists.singleton (attrsets.genAttrs possibleTopLevelKeys (name: {})))++attrs));
+in
 {
   options = {
     wirenix = {
-      enable = mkOption {
-        default = true;
-        type = with lib.types; bool;
-        description = ''
-          Wirenix
-        '';
-      };
+      enable = mkEnableOption "wirenix";
       peerName = mkOption {
         default = config.networking.hostName;
         defaultText = literalExpression "hostName";
@@ -22,21 +38,18 @@ with import ./lib.nix;
         '';
       };
       configurer = mkOption {
-        default = defaultConfigurers.static;
-        defaultText = literalExpression "wirenix.lib.defaultConfigurers.static";
-        type = with types;  functionTo (functionTo (functionTo (functionTo attrset)));
+        default = "static";
+        type = types.str;
         description = mdDoc ''
           Configurer to use. Builtin values can be 
-          `wirenix.lib.defaultConfigurers.static`
-          `wirenix.lib.defaultConfigurers.networkd` or
-          `wirenix.lib.defaultConfigurers.network-manager`
+          "static" "networkd" or "network-manager"
           Or you can put your own configurer here.
         '';
       };
       keyProviders = mkOption {
-        default = [defaultKeyProviders.acl];
-        type = with types; listOf (functionTo attrset);
-        defaultText = literalExpression "[ wirenix.lib.defaultKeyProviders.acl ]";
+        default = ["acl"];
+        type = with types; listOf str;
+        defaultText = literalExpression "[ "acl" ]";
         description = mdDoc ''
           List of key providers. Key providers will be queried in order.
           Builtin providers are `wirenix.lib.defaultKeyProviders.acl`
@@ -44,46 +57,53 @@ with import ./lib.nix;
           requires the agenix-rekey flake.
         '';
       };
+      additionalKeyProviders = mkOption {
+        default = {};
+        type = with types; attrsOf (functionTo attrs);
+        description = mdDoc ''
+          Additional key providers to load, with their names being used to select them in the
+          `keyProviders` option
+        '';
+      };
       additionalParsers = mkOption {
-        type = with types; attrsOf (functionTo attrset);
+        default = {};
+        type = with types; attrsOf (functionTo attrs);
         description = mdDoc ''
           Additional parsers to load, with their names being used to compare to the acl's
           "version" field.
         '';
       };
-      aclConfig = mkOption {
+      additionalConfigurers = mkOption {
         default = {};
-        type = types.attrset;
+        type = with types; attrsOf (functionTo attrs);
+        description = mdDoc ''
+          Additional configurers to load, with their names being used to select them in the
+          `configurer` option.
+        '';
+      };
+      aclConfig = mkOption {
+        type = types.attrs;
         description = ''
           Shared configuration file that describes all clients
         '';
       };
       secretsDir = mkOption {
-        type = types.path;
+        default = null;
+        type = with types; nullOr path;
         description = mdDoc ''
-          If using a secrets manager, where you have wireguard secrets stored for the client.
-        '';
-      };
-      subnetSecretsDir = mkOption {
-        type = types.path;
-        description = mdDoc ''
-          If using a secrets manager, where you have wireguard secrets stored for subnets.
-          Needs to be the same on all clients.
+          If using a secrets manager, where you have wirenix secrets stored. Must be
+          the same on all peers that need to connect to eachother
         '';
       };
     };
   };
   
   # --------------------------------------------------------------- #
-  
-  config =
-  let
-    parsers = defaultParsers // config.modules.wirenix.additionalParsers;
-    acl = config.modules.wirenix.aclConfig;
-    parser = parsers."${acl.version}" inputs;
-    configurer =  config.modules.wirenix.configurer inputs;
-    keyProviders =  config.modules.wirenix.keyProviders;
-  in
-  lib.mkIf (config.modules.wirenix.enable) 
-    configurer (parser acl) keyProviders config.modules.wirenix.peerName;
+  # Due to merge weirdness, I have to define what configuration keys
+  # we're touching upfront, and make sure they exist
+  config = (safetyMerge ["networking" "sops" "age" "systemd" "services" "environment"]
+    [
+      (configurer keyProviders (parser acl) cfg.peerName)
+    ]
+  );
 }

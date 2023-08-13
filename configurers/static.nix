@@ -34,4 +34,4 @@ with getKeyProviderFuncs keyProviders inputs intermediateConfig peerName;
       };}
     );
   };
-}
+} // getProviderConfig

@@ -19,8 +19,7 @@ rec {
     v1 = import ./parsers/v1.nix;
   };
   /** Builtin configurers */
-  defaultConfigurers = rec {
-    auto = static; # TODO: make smart
+  defaultConfigurers = {
     static = import ./configurers/static.nix;
     networkd = import ./configurers/networkd.nix;
     network-manager = import ./configurers/networkmanager.nix;
@@ -120,6 +119,7 @@ rec {
         (map (provider: provider.getPrivKeyFile) keyProviders);
       getSubnetPSKFile = subnetName: findFirst (x: x != null) (null)
         (map (provider: provider.getSubnetPSKFile subnetName) keyProviders);
+      getProviderConfig = foldl' (x: y: x // y) {} (map (provider: if provider ? config then provider.config else {}) keyProviders);
     };
       
     mergeIf = attr: key: if builtins.hasAttr key attr then {"${key}" = attr."${key}";} else {};
