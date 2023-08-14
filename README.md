@@ -1,16 +1,23 @@
 WireNix is a Nix Flake designed to make creation of Wireguard mesh networks
 easier. The simplist and most likely layout is a full mesh network, but Wirenix
-is able to support arbitrary graph topologies.  
+can also support arbitrary graph topologies.  
 # Reading the README
-Due to Nix's typeless nature, I have opted to define all my configurations in
-psuedo-typescript to make options more legible. I have chosen typescript
+Due to Nix's dynamic typing, I have opted to define all my ACL configurations
+in psuedo-typescript to make options more legible. I have chosen typescript
 because it looks somewhat like JSON and is easy to understand. Examples will
-still be given in Nix EL.  
+still be given in Nix EL. Function signatures will still follow the traditional
+Haskell-like function signatures seen throughout nix projects.  
 
-You can start by reading the `ACL Configuration` section, then reading
-`Quick Start` section for how to use configure your machines. Other sections
-exist to provide helpful context and advanced usage, but should not be
-necessary for a working setup.  
+You can start by reading the [ACL Configuration](ACL Configuration) section,
+then reading [Quick Start](Quick Start) section for how to configure your
+machines. Other sections exist to provide helpful context and advanced usage,
+but should not be necessary for a working setup.  
+
+Wirenix assumes a flakes setup, that's what I use. Maybe it works without
+flakes, maybe not. I'm not familiar enough with the non-flakes landscape
+to provide support. I am open to making simple changes to make using this
+project without flakes easier if anyone has suggestions or wants to submit
+a patch.  
 
 # ACL Configuration
 The ACL is a nix attrset designed to be represented in JSON for easy importing
@@ -28,11 +35,11 @@ type ACL = {
 };
 ```
 
-Version is used to check for config compatibility and is recommended. Not
-specifying version will parse the configuration with the most recent parser
-available and generate a warning. Using an older configuration version than
-available will use the parser for that version and generate a warning. Using
-a version newer than any parsers available will throw an error.  
+`Version` is used to check to find the right parser and is required. Using an
+older. At the moment there is only "v1" builtin.  
+
+`extraArgs` is explained later, and can be ignored unless you are trying to
+make your own integrations.
 
 ## subnet:
 ```typescript
@@ -61,13 +68,17 @@ type peer = {
     ipAddresses?: str[];
     extraArgs?: any; // goes to intermediate config subnetConnection
   };
-  publicKey: string;
-  privateKeyFile: string; 
+  publicKey: str;
+  privateKeyFile: str; 
   groups?: str[];
   endpoints?: endpoint[];
   extraArgs?: any; // goes to intermediate config peer
 };
 ```
+
+`[subnetName: str]: {...}` means `subnets` is an object (attrset) with
+string typed keys, and values that follows the typing of the nested object
+`...`.  
 
 ## Connection:
 ```typescript
@@ -105,6 +116,9 @@ merged in this order: subnet -> group -> peer; with peer being the highest
 priority, overriding others. A good layout is to set ports in subnet, ip in
 peer, and leave group empty. group endpoints can be useful for specifying
 connection details across port forwarded NATs, however.  
+Note that `dynamicEndpointRefreshSeconds` and 
+`dynamicEndpointRefreshRestartSeconds` are ignored for connecting networkd
+peers.  
 
 ## Filter:
 ```typescript
@@ -115,6 +129,20 @@ type filter = {
 }[]; // <==== Important! It's a list
 ```
 
+A filter is a list of filter rules. Each filter rule has the attributes
+`type`, `rule` and `value`. `type` selects what to match with, `rule`
+selects whether to invert the match (`"not"`) or not (`"is"`). `Value` is
+the value to search for. Multiple filter rules in the filter list combine
+as the intersection. For example:
+```nix
+[
+  {type="group"; rule="is"; value="desktops"}
+  {type="peer"; rule="not"; value="joesdesktop"}
+]
+```
+This will select all peers in the `desktop` group, except the peer named
+`joesdesktop`.  
+
 ## extraArgs
 `extraArgs` is intentionally left alone. I promise I won't ever set
 `extraArgs`, but any value in it will be forwarded on to the corresponding
@@ -122,22 +150,58 @@ section in the intermediate configuration. Because of this, it can be used to
 pass data into user defined Configuration Modules. Most users can ignore
 `extraArgs`.  
 
+# Quick Start  
+1. Make your ACL according to the [ACL Configuration]](ACL Configuration) section.
+You can look in the `examples/acl` folder for examples.  
+2. Include the module in your flake config:
+```nix
+...
+inputs.wirenix.url = "sourcehut:~msalerno/wirenix";
+outputs = { self, nixpkgs, wirenix }: {
+  nixosConfigurations = {
+    example = nixpkgs.lib.nixosSystem rec {
+    system = "x86_64-linux";
+    modules = [
+      ./machines/example.nix
+      wirenix.nixosModules.default
+    ] 
+  };
+};
+```
+
+3. Configure wirenix in your nixosConfiguration (`./machines/example.nix` in this
+case):
+```nix 
+wirenix = {
+  enable = true;
+  peerName = "example" # defaults to hostname otherwise
+  configurer = "static" # defaults to "static", could also be "networkd"
+  keyProviders = ["acl"]; # could also be ["agenix-rekey"] or ["acl" "agenix-rekey"]
+  # secretsDir = ../../secrets; # only if you're using agenix-rekey
+  aclConfig = import ../../acl.nix;
+};
+```
+
+4. Profit  
+
 # Architecture
-WireNix consists of 4 main components:  
+WireNix consists of 5 main components:  
 1. The shared ACL Configuration  
-2. Parser Modules  
-3. The intermediate Configuration  
-4. Configuration Modules  
+2. The Key Providers  
+3. Parser Modules  
+4. The intermediate Configuration  
+5. Configuration Modules  
 
 The goal of splitting WireNix into modules is both for my own sanity when
 developing, and to make it hackable without requiring users to make their own
 fork. Users are able to specify their own Parser Modules, enabling them to use
 their own preferred ACL syntax if they desire. Users can also specify their own
 configuration modules, allowing them to add compatibility to for other network
-stacks or to enable their own modules. Using both custom Parser and
-Configuration modules enables essentially rewriting this flake however you see
-fit, all without making a fork (although at that point I may question why you
-don't write your own module from scratch).  
+stacks or to enable their own modules. It is also possible to add new key
+providers. Using both custom Parser and Configuration modules enables
+essentially rewriting this flake however you see fit, all without making a fork
+(although at that point I may question why you don't write your own module from
+scratch).  
 
 ## ACL
 The shared ACL configuration should describe the full network topology. It does
@@ -151,13 +215,28 @@ You can make your own ACL configuration format so long as you keep the
 Parser Modules are responsible for taking an ACL and converting it to the
 intermediate configuration format. Parser modules are selected by matching the
 ACL version field. A parser module must take an ACL and return the
-corresponding Intermediate Configuration You can register your own parser
+corresponding Intermediate Configuration. A parser has the following
+interface:  
+
+```typescript
+type parser = (inputs: attrset, aclConfig: ACL) => intermediateConfiguration;
+```
+
+You can register your own parser
 module like so:  
 
 ```nix
-modules.wirenix.additionalParsers = {
+wirenix.additionalParsers = {
     myParser = import ./my-parser.nix;
 }
+```
+
+And then, in your ACL, set the version:  
+  
+```nix
+...
+version = "myParser";
+...
 ```
 
 ## Intermediate Configuration
@@ -176,9 +255,9 @@ configuration has the following structure:
 ### Root Structure
 ```typescript
 type intermediateConfiguration = {
-    peers: {[peerName: string]: peer};
-    subnets: {[subnetName: string]: subnet};
-    groups: {[groupName: string]: group};
+    peers: {[peerName: str]: peer};
+    subnets: {[subnetName: str]: subnet};
+    groups: {[groupName: str]: group};
 }
 ```
 
@@ -186,10 +265,10 @@ type intermediateConfiguration = {
 
 ```typescript
 type peer = {
-    subnetConnections: {[subnetName: string]: subnetConnection};
-    groups: {[groupName: string]: group}
-    publicKey: string;
-    privateKeyFile: string; 
+    subnetConnections: {[subnetName: str]: subnetConnection};
+    groups: {[groupName: str]: group}
+    publicKey: str;
+    privateKeyFile: str; 
     extraArgs?: any;
 };
 ```
@@ -199,7 +278,7 @@ type peer = {
 
 ```typescript
 type subnet = {
-    peers: {[peerName: string]: peer};
+    peers: {[peerName: str]: peer};
     extraArgs?: any;
 };
 ```
@@ -208,7 +287,7 @@ type subnet = {
 
 ```typescript
 type group = {
-    peers: {[peerName: string]: peer};
+    peers: {[peerName: str]: peer};
     extraArgs?: any;
 };
 ```
@@ -218,7 +297,7 @@ type group = {
 ```typescript
 type peerConnection = {
     peer: peer;
-    ipAddresses: string[];
+    ipAddresses: str[];
     endpoint: endpoint;
     extraArgs?: any;
 };
@@ -229,9 +308,9 @@ type peerConnection = {
 ```typescript
 type subnetConnection = {
     subnet: subnet;
-    ipAddresses: string[];
+    ipAddresses: str[];
     listenPort: int;
-    peerConnections: {[peerName: string]: peerConnection};
+    peerConnections: {[peerName: str]: peerConnection};
     extraArgs?: any;
 };
 ```
@@ -254,33 +333,96 @@ This graph can be traversed back and forth in circles until you run out of
 stack space.  
 
 ## Configuration Modules
-Configuration Modules take the Intermediate Configuration and produce NixOS
-configurations from them. By default, there exist configuration modules for
-setting up wireguard with the static network configuration, networkd, and
-Network Manager. There is a fourth, "default" configuration module that
-intelligently selects which module to use (with priority being networkd >
-network manager > static configuration). However, you can manually override
-which module is used (or use your own module) in your flake.nix file:  
+Configuration Modules take the Key provider list and Intermediate Configuration
+to produce NixOS configurations. By default, there exist configuration modules
+for setting up wireguard with the static network configuration (default) or
+networkd configuration. A configurer has the following interface:  
+
+```typescript
+type configurer = (inputs: attrset, keyProviders: keyProvider[], intermediateConfig: intermediateConfiguration) => nixosConfiguration;
+```
+
+You can set which module is used (or use your 
+own module) in your flake.nix file:  
 
 ```nix
-modules.wirenix.configurer = "v0"; # there is no v0, this is just an example
+wirenix.configurer = "networkd"; 
 ```
 
 or for your own module:  
 
 ```nix
-modules.wirenix.additionalConfigurers.myConfigurer = import ./my-parser.nix;
-modules.wirenix.configurer = "myConfigurer";
+wirenix.additionalConfigurers.myConfigurer = import ./my-configurer.nix;
+wirenix.configurer = "myConfigurer";
 ```
 
-And then, in your ACL, set the version:  
-  
+## Key Providers
+Configurers require a list of key providers to query for information about
+wireguard key pairs. The providers in the list are queried in order, moving on
+to the next provider if `null` is returned. This allows keeping key pairs
+in multiple places, but most likely the key provider list will be a singleton.
+Key Providers have the following stracture:  
+
+```typescript
+type keyProvider = {
+    config: nixosConfig;
+    getPeerPubKey: (otherPeerName: str) => str;
+    getPrivKeyFile: str;
+    getSubnetPSKFile: (subnetName: str) => str;
+};
+```
+
+You can add your own key providers like so:  
 ```nix
-...
-version = "myConfigurer";
-...
+wirenix.additionalKeyProviders.myKeyProvider = import ./my-key-provider.nix;
+wirenix.keyProviders = ["myKeyProvider"];
 ```
 
+# Integrations:
+By default, WireNix supports setting wireguard keypairs with
+[agenix-rekey](https://github.com/oddlama/agenix-rekey).
+WireNix also supports networkd, network manager, and the nixos static network
+configuration (default).  
+
+Using networkd:  
+```nix
+systemd.network.enable = true;
+wirenix = {
+  enable = true;
+  configurer = "networkd"
+  aclConfig = import ./my-acl.nix;
+};
+```
+
+Using static configuration:  
+```nix
+wirenix = {
+  enable = true;
+  configurer = "static"
+  aclConfig = import ./my-acl.nix;
+};
+```
+
+Using agenix-rekey (assuming it's already set up properly)  
+```nix
+wirenix = {
+  enable = true;
+  keyProviders = ["agenix-rekey"];
+  secretsDir = ../../secrets;
+  aclConfig = import ./my-acl.nix;
+};
+```
+
+Using the ACL's keypairs if specified, otherwise using agenix-rekey
+(reverse order not possible)  
+```nix
+wirenix = {
+  enable = true;
+  keyProviders = ["acl" "agenix-rekey"];
+  secretsDir = ../../secrets;
+  aclConfig = import ./my-acl.nix;
+};
+```
 
 # Troubleshooting
 Wirenix tries to stay seperated from the inner working of your config for as
@@ -294,10 +436,12 @@ $ nix-repl> :l <nixpkgs>
 
 $ nix-repl> :lf "sourcehut:~msalerno/wirenix"
 > Added 11 variables.
+# named the wirenix lib 'wnlib' to prevent issues with nixpkgs.lib in the repl
+$ nix-repl> parse = wnlib.defaultParsers.v1 {inherit lib;}
 
-$ nix-repl> parse = wirenix.lib.defaultParsers.v1 {inherit lib;}
+$ nix-repl> keyProviders = [wnlib.defaultKeyProviders.acl]
 
-$ nix-repl> configure = wirenix.lib.defaultConfigurers.static {inherit lib;}
+$ nix-repl> configure = wnlib.defaultConfigurers.static {inherit lib;} keyProviders
 
 $ nix-repl> acl = import ./examples/fullMesh/acl.nix # replace with your acl
 
@@ -318,10 +462,10 @@ $ nix-repl> :p genPeerConfig "peer1"
 
 # printing the intermediate config with :p will cause a stack overflow
 # but we have a helper function for this
-$ nix-repl> :p wirenix.lib.breakIntermediateRecursion intConfig
+$ nix-repl> :p wnlib.breakIntermediateRecursion intConfig
 > { a bunch of hard to read data }
 # you can get a string and paste it into echo -e for pretty printing
-$ nix-repl> lib.generators.toPretty {} (wirenix.lib.breakIntermediateRecursion intConfig)
+$ nix-repl> lib.generators.toPretty {} (wnlib.breakIntermediateRecursion intConfig)
 > "even uglier result but it copy pastes well"
 ```
 
@@ -332,36 +476,6 @@ $ echo -e "paste the big text result from nix repl in here"
 > a nice result
 ```
 
-# Integrations:
-By default, WireNix supports setting wireguard keypairs with
-[agenix-rekey](https://github.com/oddlama/agenix-rekey).
-WireNix also supports networkd, network manager, and the nixos static network
-configuration (default).  
-
-Using networkd:  
-
-```nix
-TODO
-```
-
-Using network manager:  
-
-```nix
-TODO
-```
-
-Using static configuration:  
-
-```nix
-TODO
-```
-
-Using agenix-rekey (assuming it's already set up properly)  
-
-```nix
-TODO
-```
-
 # Current Issues / Drawbacks
 - WireNix does not do NAT traversal, it's up to you to forward the correct
 ports on your NAT device(s) and apply the correct firewall rules on your
@@ -370,6 +484,15 @@ router(s).
 more dynamic, look into Tailscale/Headscale.  
 - Peers cannot have multiple keys. If this is a desirable feature I may think
 of adding it, but I cannot think of a good reason for it.  
+- There's no testing infrastructure in place right now, and plenty of untested
+scenarios.
+- Currently this will create empty `sops` and `age` top level attributes in your
+config if you don't already have them. It has to do with some terrible hackery
+I did in `wire.nix` to prevent infinite recursion. If any wizards out there
+want to send in a patch it would be mutch appreciated!  
+
+# License  
+This project is licensed under the MPL 2.0  
 
 # Glosary
 ## ACL
