@@ -2,26 +2,26 @@ WireNix is a Nix Flake designed to make creation of Wireguard mesh networks
 easier. The simplist and most likely layout is a full mesh network, but Wirenix
 can also support arbitrary graph topologies.  
 # Reading the README
-Due to Nix's dynamic typing, I have opted to define all my ACL configurations
-in psuedo-typescript to make options more legible. I have chosen typescript
+Due to Nix's dynamic typing, I have opted to define configurations in
+psuedo-typescript to make options more legible. I have chosen typescript
 because it looks somewhat like JSON and is easy to understand. Examples will
-still be given in Nix EL. Function signatures will still follow the traditional
-Haskell-like function signatures seen throughout nix projects.  
+still be given in Nix EL.  
 
-You can start by reading the [ACL Configuration](ACL Configuration) section,
-then reading [Quick Start](Quick Start) section for how to configure your
-machines. Other sections exist to provide helpful context and advanced usage,
-but should not be necessary for a working setup.  
+You can start by reading the [[ACL Configuration]] section, then reading
+[[Quick Start]] section for how to configure your machines. Other sections
+exist to provide helpful context and advanced usage, but should not be
+necessary for a working setup.  
 
 Wirenix assumes a flakes setup, that's what I use. Maybe it works without
 flakes, maybe not. I'm not familiar enough with the non-flakes landscape
 to provide support. I am open to making simple changes to make using this
-project without flakes easier if anyone has suggestions or wants to submit
+project work without flakes if anyone has suggestions or wants to submit
 a patch.  
 
 # ACL Configuration
 The ACL is a nix attrset designed to be represented in JSON for easy importing
-and potential use outside of the nix ecosystem.  
+and potential use outside of the nix ecosystem. The vast majority of all your
+wirenix configuration will end up in here, with a few exceptions noted later.  
 
 ## top level acl:
 ```typescript
@@ -31,7 +31,7 @@ type ACL = {
   groups: group[];
   peers: peer[];
   connections: connection[];
-  extraArgs?: any; // goes to intermediate config
+  extraArgs?: attrset; // goes to intermediate config
 };
 ```
 
@@ -39,14 +39,15 @@ type ACL = {
 older. At the moment there is only "v1" builtin.  
 
 `extraArgs` is explained later, and can be ignored unless you are trying to
-make your own integrations.
+make your own integrations.  
 
 ## subnet:
 ```typescript
 type subnet = {
   name: str;
   endpoints?: endpoint[];
-  extraArgs?: any; // goes to intermediate config subnet
+  presharedKeyFile?: str;
+  extraArgs?: attrset; // goes to intermediate config subnet
 };
 ```
 
@@ -55,7 +56,7 @@ type subnet = {
 type group = {
   name: str;
   endpoints?: endpoint[];
-  extraArgs?: any; // goes to intermediate config group
+  extraArgs?: attrset; // goes to intermediate config group
 };
 ```
 
@@ -66,19 +67,19 @@ type peer = {
   subnets: [subnetName: str]: {
     listenPort: int;
     ipAddresses?: str[];
-    extraArgs?: any; // goes to intermediate config subnetConnection
+    extraArgs?: attrset; // goes to intermediate config subnetConnection
   };
   publicKey: str;
   privateKeyFile: str; 
   groups?: str[];
   endpoints?: endpoint[];
-  extraArgs?: any; // goes to intermediate config peer
+  extraArgs?: attrset; // goes to intermediate config peer
 };
 ```
 
-`[subnetName: str]: {...}` means `subnets` is an object (attrset) with
-string typed keys, and values that follows the typing of the nested object
-`...`.  
+"`[subnetName: str]: {...}`" means "`subnets`" is an attrset with
+string typed keys, and values that follow the typing of the nested object
+"`...`".  
 
 ## Connection:
 ```typescript
@@ -86,7 +87,7 @@ type connection = {
   a: filter;
   b: filter;
   subnets: str[];
-  extraArgs?: any; // merged into intermediate config peerConnection
+  extraArgs?: attrset; // merged into intermediate config peerConnection
 };
 ```
 
@@ -106,7 +107,7 @@ type endpoint = {
   persistentKeepalive?: int;
   dynamicEndpointRefreshSeconds?: int;
   dynamicEndpointRefreshRestartSeconds?: int;
-  extraArgs?: any; // merged to intermediate config peerConnection.endpoin
+  extraArgs?: attrset; // merged to intermediate config peerConnection.endpoin
 };
 ```
 
@@ -154,43 +155,44 @@ pass data into user defined Configuration Modules. Most users can ignore
 1. Make your ACL according to the [ACL Configuration]](ACL Configuration) section.
 You can look in the `examples/acl` folder for examples.  
 2. Include the module in your flake config:
-```nix
-...
-inputs.wirenix.url = "sourcehut:~msalerno/wirenix";
-outputs = { self, nixpkgs, wirenix }: {
+  ```nix
+  ...
+  inputs.wirenix.url = "sourcehut:~msalerno/wirenix";
+  outputs = { self, nixpkgs, wirenix }: {
   nixosConfigurations = {
     example = nixpkgs.lib.nixosSystem rec {
-    system = "x86_64-linux";
-    modules = [
-      ./machines/example.nix
-      wirenix.nixosModules.default
-    ] 
+      system = "x86_64-linux";
+      modules = [
+        ./machines/example.nix
+        wirenix.nixosModules.default
+      ] 
+    };
   };
-};
-```
+  ```
 
 3. Configure wirenix in your nixosConfiguration (`./machines/example.nix` in this
 case):
-```nix 
-wirenix = {
-  enable = true;
-  peerName = "example" # defaults to hostname otherwise
-  configurer = "static" # defaults to "static", could also be "networkd"
-  keyProviders = ["acl"]; # could also be ["agenix-rekey"] or ["acl" "agenix-rekey"]
-  # secretsDir = ../../secrets; # only if you're using agenix-rekey
-  aclConfig = import ../../acl.nix;
-};
-```
+  ```nix 
+  wirenix = {
+    enable = true;
+    peerName = "example" # defaults to hostname otherwise
+    configurer = "static" # defaults to "static", could also be "networkd"
+    keyProviders = ["acl"]; # could also be ["agenix-rekey"] or ["acl" "agenix-rekey"]
+    # secretsDir = ../../secrets; # only if you're using agenix-rekey
+    aclConfig = import ../../acl.nix;
+  };
+  ```
 
 4. Profit  
 
 # Architecture
 WireNix consists of 5 main components:  
 1. The shared ACL Configuration  
-2. The Key Providers  
-3. Parser Modules  
-4. The intermediate Configuration  
-5. Configuration Modules  
+2. Parser Modules  
+3. The intermediate Configuration  
+4. Configuration Modules
+5. The Key Providers  
+  
 
 The goal of splitting WireNix into modules is both for my own sanity when
 developing, and to make it hackable without requiring users to make their own
@@ -204,12 +206,10 @@ essentially rewriting this flake however you see fit, all without making a fork
 scratch).  
 
 ## ACL
-The shared ACL configuration should describe the full network topology. It does
-not need to consist only of NixOS peers (although at the moment, other peers
-will have to be configured manually to conform to the expected settings). The
-details of this file are documented in the  `Top Level ACL` section.
-You can make your own ACL configuration format so long as you keep the
-`version` field and set it to some unique name.
+The shared ACL configuration describes the full network topology. It does not
+need to consist only of NixOS peers The details of this file are documented in
+the  [[Top Level ACL]] section. You can make your own ACL configuration format so
+long as you keep the "`version`" field and set it to some unique name.
 
 ## Parser Modules
 Parser Modules are responsible for taking an ACL and converting it to the
@@ -241,16 +241,15 @@ version = "myParser";
 
 ## Intermediate Configuration
 The Intermediate Configuration is a recursive attrset that is more suited for
-being used in a NixOS configuration than the ACL Configuration.  
-Unlike the ACL, the intermediate configuration is more verbose, easier to
-traverse, repeats itself often, and is recursive. This allows cross version
+being used in a NixOS configuration than the ACL Configuration. Unlike the ACL,
+the intermediate configuration is more verbose, easier to traverse, contains
+duplicate information, and is recursive. This allows cross version
 compatibility so long as the intermediate configuration doesn't change. Any
 changes will likely only be the addition of optional features that do not
 interfere with existing intermediate configuration use, though at this stage
-there are no guarentees.  
-It can be assumed that all types mentioned are types for the intermediate
-connection and NOT the related to types in the ACL. The intermediate
-configuration has the following structure:  
+there are no guarentees.   
+Take note while reading that certain structures may be similar to the ACL,
+but they are not necessarily the same as their ACL counterparts.  
 
 ### Root Structure
 ```typescript
@@ -258,6 +257,7 @@ type intermediateConfiguration = {
     peers: {[peerName: str]: peer};
     subnets: {[subnetName: str]: subnet};
     groups: {[groupName: str]: group};
+    extraArgs?: attrset;
 }
 ```
 
@@ -266,10 +266,10 @@ type intermediateConfiguration = {
 ```typescript
 type peer = {
     subnetConnections: {[subnetName: str]: subnetConnection};
-    groups: {[groupName: str]: group}
     publicKey: str;
     privateKeyFile: str; 
-    extraArgs?: any;
+    groups?: {[groupName: str]: group}    
+    extraArgs?: attrset;
 };
 ```
 
@@ -279,7 +279,8 @@ type peer = {
 ```typescript
 type subnet = {
     peers: {[peerName: str]: peer};
-    extraArgs?: any;
+    presharedKeyFile?: str;
+    extraArgs?: attrset;
 };
 ```
 
@@ -288,18 +289,7 @@ type subnet = {
 ```typescript
 type group = {
     peers: {[peerName: str]: peer};
-    extraArgs?: any;
-};
-```
-
-### Peer Connection
-
-```typescript
-type peerConnection = {
-    peer: peer;
-    ipAddresses: str[];
-    endpoint: endpoint;
-    extraArgs?: any;
+    extraArgs?: attrset;
 };
 ```
 
@@ -311,7 +301,18 @@ type subnetConnection = {
     ipAddresses: str[];
     listenPort: int;
     peerConnections: {[peerName: str]: peerConnection};
-    extraArgs?: any;
+    extraArgs?: attrset;
+};
+```
+
+### Peer Connection
+
+```typescript
+type peerConnection = {
+    peer: peer;
+    ipAddresses: str[];
+    endpoint: endpoint;
+    extraArgs?: attrset;
 };
 ```
 
@@ -324,13 +325,9 @@ type endpoint = {
    persistentKeepalive?: int;
    dynamicEndpointRefreshSeconds?: int;
    dynamicEndpointRefreshRestartSeconds?: int;
-   extraArgs?: any;
+   extraArgs?: attrset;
 };
 ```
-
-Unlike the ACL, this structure is recursive, resembling an arbitrary graph.
-This graph can be traversed back and forth in circles until you run out of
-stack space.  
 
 ## Configuration Modules
 Configuration Modules take the Key provider list and Intermediate Configuration
@@ -381,7 +378,7 @@ wirenix.keyProviders = ["myKeyProvider"];
 # Integrations:
 By default, WireNix supports setting wireguard keypairs with
 [agenix-rekey](https://github.com/oddlama/agenix-rekey).
-WireNix also supports networkd, network manager, and the nixos static network
+WireNix also supports using either networkd or the nixos static network
 configuration (default).  
 
 Using networkd:  
