@@ -155,33 +155,33 @@ pass data into user defined Configuration Modules. Most users can ignore
 1. Make your ACL according to the [ACL Configuration]](ACL Configuration) section.
 You can look in the `examples/acl` folder for examples.  
 2. Include the module in your flake config:
-  ```nix
-  ...
-  inputs.wirenix.url = "sourcehut:~msalerno/wirenix";
-  outputs = { self, nixpkgs, wirenix }: {
-  nixosConfigurations = {
-    example = nixpkgs.lib.nixosSystem rec {
-      system = "x86_64-linux";
-      modules = [
-        ./machines/example.nix
-        wirenix.nixosModules.default
-      ] 
+    ```nix
+    ...
+    inputs.wirenix.url = "sourcehut:~msalerno/wirenix";
+    outputs = { self, nixpkgs, wirenix }: {
+    nixosConfigurations = {
+        example = nixpkgs.lib.nixosSystem rec {
+        system = "x86_64-linux";
+        modules = [
+            ./machines/example.nix
+            wirenix.nixosModules.default
+        ] 
+        };
     };
-  };
-  ```
+    ```
 
 3. Configure wirenix in your nixosConfiguration (`./machines/example.nix` in this
 case):
-  ```nix 
-  wirenix = {
-    enable = true;
-    peerName = "example" # defaults to hostname otherwise
-    configurer = "static" # defaults to "static", could also be "networkd"
-    keyProviders = ["acl"]; # could also be ["agenix-rekey"] or ["acl" "agenix-rekey"]
-    # secretsDir = ../../secrets; # only if you're using agenix-rekey
-    aclConfig = import ../../acl.nix;
-  };
-  ```
+    ```nix 
+    wirenix = {
+        enable = true;
+        peerName = "example" # defaults to hostname otherwise
+        configurer = "static" # defaults to "static", could also be "networkd"
+        keyProviders = ["acl"]; # could also be ["agenix-rekey"] or ["acl" "agenix-rekey"]
+        # secretsDir = ../../secrets; # only if you're using agenix-rekey
+        aclConfig = import ../../acl.nix;
+    };
+    ```
 
 4. Profit  
 
