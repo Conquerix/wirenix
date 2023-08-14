@@ -7,8 +7,8 @@ psuedo-typescript to make options more legible. I have chosen typescript
 because it looks somewhat like JSON and is easy to understand. Examples will
 still be given in Nix EL.  
 
-You can start by reading the [[ACL Configuration]] section, then reading
-[[Quick Start]] section for how to configure your machines. Other sections
+You can start by reading the "ACL Configuration" section, then reading
+"Quick Start" section for how to configure your machines. Other sections
 exist to provide helpful context and advanced usage, but should not be
 necessary for a working setup.  
 
@@ -208,7 +208,7 @@ scratch).
 ## ACL
 The shared ACL configuration describes the full network topology. It does not
 need to consist only of NixOS peers The details of this file are documented in
-the  [[Top Level ACL]] section. You can make your own ACL configuration format so
+the  "Top Level ACL" section. You can make your own ACL configuration format so
 long as you keep the "`version`" field and set it to some unique name.
 
 ## Parser Modules
