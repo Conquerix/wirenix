@@ -76,16 +76,16 @@ rec {
     funcs: list: map (pipe' funcs) list;
   
   /** generate last 20 characters (80 bits) of the peer's IPv6 address */
-  generateIPv6Suffix =  peerName: substring 0 20 (hashString "sha256" peerName);
+  generateIPv6Suffix =  peerName: substring 0 16 (hashString "sha256" peerName);
   
   /** generate the first 10 characters of the IPV6 address for the subnet name */
-  generateIPv6Prefix = subnetName: "fd" + (substring 0 10 (hashString "sha256" subnetName));
+  generateIPv6Prefix = subnetName: "fd" + (substring 0 14 (hashString "sha256" subnetName));
   
   /** generates a full IPv6 subnet */
-  generateIPv6Subnet = subnetName: (addColonsToIPv6 (generateIPv6Prefix subnetName)) + "::/80";
+  generateIPv6Subnet = subnetName: (addColonsToIPv6 (generateIPv6Prefix subnetName)) + "::/64";
   
   /** generates a full IPv6 address */
-  generateIPv6Address = subnetName: peerName: (addColonsToIPv6 ((generateIPv6Prefix subnetName) + (generateIPv6Suffix peerName))) + "/80";
+  generateIPv6Address = subnetName: peerName: (addColonsToIPv6 ((generateIPv6Prefix subnetName) + (generateIPv6Suffix peerName))) + "/64";
   
   /** 
    * makes the intermediate config non-recursive, so it can be pretty printed and
