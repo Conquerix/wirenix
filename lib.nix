@@ -127,4 +127,5 @@ rec {
     };
       
     mergeIf = attr: key: if builtins.hasAttr key attr then {"${key}" = attr."${key}";} else {};
+    cidr2ip = cidr: head (filter (item: item != []) (split "/" cidr));
 }

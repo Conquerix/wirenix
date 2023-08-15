@@ -51,6 +51,16 @@ type subnet = {
 };
 ```
 
+! WARNING ! If your subnet name has a ".", the wireguard connection's name will
+be everything preceding the ".". This is because there is a hard limit of 15
+characters for wireguard connection names. For example, if your subnet is named
+"myVPN.mydomain.com" (18 characters), the wireguard connection will be named
+"myVPN". This is useful because the longer name will still be used to generate
+a unique ip and in the hosts file, just not for the netdev name. This
+unfortunately means that you cannot share subdomains across different domain
+on the same machine. A workaround is to use dashes if your FQDN is under 15
+characters.  
+
 ## Group:
 ```typescript
 type group = {
