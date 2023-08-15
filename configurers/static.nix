@@ -18,9 +18,9 @@ let
 in
 with getKeyProviderFuncs keyProviders inputs intermediateConfig peerName;
 {
-  networking.extraHosts = concatStringsSep "\n" (concatLists (forEachAttrToList thisPeer.subnetConnections (subnetName: subnetConnection: 
-    (forEachAttrToList subnetConnection.peerConnections (otherPeerName: peerConnection: "${peerConnection.endpoint.ip} ${peerName}.${subnetName}"))
-  ))); 
+  networking.extraHosts = concatStringsSep "\n" (concatLists ( concatLists (forEachAttrToList thisPeer.subnetConnections (subnetName: subnetConnection: 
+    forEachAttrToList subnetConnection.peerConnections (otherPeerName: peerConnection: forEach peerConnection.ipAddresses (ip: "${strings.removeSuffix "/64" ip} ${otherPeerName}.${subnetName}"))
+  )))); 
   networking.wireguard = {
     interfaces = forEachAttr' thisPeer.subnetConnections (subnetName: subnetConnection: nameValuePair "wn-${subnetName}"
       {
