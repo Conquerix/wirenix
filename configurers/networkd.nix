@@ -18,6 +18,9 @@ let
 in
 with getKeyProviderFuncs keyProviders inputs intermediateConfig peerName;
 {
+  networking.extraHosts = concatStringsSep "\n" (concatLists (forEachAttrToList thisPeer.subnetConnections (subnetName: subnetConnection: 
+    forEachAttrToList subnetConnection.peerConnections (otherPeerName: peerConnection: "${peerConnection.endpoint.ip} ${peerName}.${subnetName}")
+  ))); 
   systemd.network = { 
     netdevs = forEachAttr' thisPeer.subnetConnections (subnetName: subnetConnection: nameValuePair "50-wn-${subnetName}" { 
       netdevConfig = {
