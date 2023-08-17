@@ -1,3 +1,4 @@
+[Issue Tracker](https://todo.sr.ht/~msalerno/wirenix)  
 WireNix is a Nix Flake designed to make creation of Wireguard mesh networks
 easier. The simplist and most likely layout is a full mesh network, but Wirenix
 can also support arbitrary graph topologies.  
@@ -7,7 +8,7 @@ psuedo-typescript to make options more legible. I have chosen typescript
 because it looks somewhat like JSON and is easy to understand. Examples will
 still be given in Nix EL.  
 
-You can start by reading the "ACL Configuration" section, then reading
+You can start by reading the "ACL Configuration" section, then reading the
 "Quick Start" section for how to configure your machines. Other sections
 exist to provide helpful context and advanced usage, but should not be
 necessary for a working setup.  
@@ -23,7 +24,7 @@ The ACL is a nix attrset designed to be represented in JSON for easy importing
 and potential use outside of the nix ecosystem. The vast majority of all your
 wirenix configuration will end up in here, with a few exceptions noted later.  
 
-## top level acl:
+## top level acl
 ```typescript
 type ACL = {
   version?: str;
@@ -41,7 +42,7 @@ older. At the moment there is only "v1" builtin.
 `extraArgs` is explained later, and can be ignored unless you are trying to
 make your own integrations.  
 
-## subnet:
+## subnet
 ```typescript
 type subnet = {
   name: str;
@@ -61,7 +62,7 @@ unfortunately means that you cannot share subdomains across different domain
 on the same machine. A workaround is to use dashes if your FQDN is under 15
 characters.  
 
-## Group:
+## Group
 ```typescript
 type group = {
   name: str;
@@ -91,7 +92,7 @@ type peer = {
 string typed keys, and values that follow the typing of the nested object
 "`...`".  
 
-## Connection:
+## Connection
 ```typescript
 type connection = {
   a: filter;
@@ -131,7 +132,7 @@ Note that `dynamicEndpointRefreshSeconds` and
 `dynamicEndpointRefreshRestartSeconds` are ignored for connecting networkd
 peers.  
 
-## Filter:
+## Filter
 ```typescript
 type filter = {
   type: ["peer" | "group" | "subnet"];
@@ -162,7 +163,7 @@ pass data into user defined Configuration Modules. Most users can ignore
 `extraArgs`.  
 
 # Quick Start  
-1. Make your ACL according to the [ACL Configuration]](ACL Configuration) section.
+1. Make your ACL according to the "ACL Configuration" section.
 You can look in the `examples/acl` folder for examples.  
 2. Include the module in your flake config:
     ```nix
@@ -484,9 +485,9 @@ $ echo -e "paste the big text result from nix repl in here"
 ```
 
 # Current Issues / Drawbacks
-- WireNix does not do NAT traversal, it's up to you to forward the correct
-ports on your NAT device(s) and apply the correct firewall rules on your
-router(s).  
+- WireNix does not do NAT traversal, routing, DNS (although it will add to the
+hosts file), or anything like that. It's up to you to forward the correct
+ports, set the right firewall rules, make routing rules, do NAT traversal, etc.  
 - WireNix does not allow for dynamic addition of peers. If you need something
 more dynamic, look into Tailscale/Headscale.  
 - Peers cannot have multiple keys. If this is a desirable feature I may think
@@ -495,8 +496,23 @@ of adding it, but I cannot think of a good reason for it.
 scenarios.
 - Currently this will create empty `sops` and `age` top level attributes in your
 config if you don't already have them. It has to do with some terrible hackery
-I did in `wire.nix` to prevent infinite recursion. If any wizards out there
+I did in `wire.nix` to prevent infinite recursion. If any Nix wizards out there
 want to send in a patch it would be mutch appreciated!  
+
+# Other Bits
+- The netdev, network, and interfaces options for a subnet on a client will
+have the same key as your subnet name, except in the case where the name
+contains a '.', in which case it will be truncated to the first stretch of text
+before the '.'. Networkd files have a priority of 50.
+- It's not unexpected to add your own configuration to these options. If
+something breaks, reach out.  
+- Sourcehut is weird, if you don't know, you can submit issues on
+[my wirenix tracker](https://todo.sr.ht/~msalerno/wirenix)
+and read the 
+[git email guide](https://git-send-email.io/)
+for info on submitting patches. You can also email issues to
+~msalerno/wirenix@todo.sr.ht
+And they'll end up on the same issue tracker.  
 
 # License  
 This project is licensed under the MPL 2.0  
