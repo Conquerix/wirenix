@@ -5,9 +5,24 @@
  */
 {
   description = "A wireguard network creation tool";
-  outputs = { self, ... }:
+  outputs = { self, nixpkgs, ... }:
+  let
+    forAllSystems = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ];
+  in
   {
     wnlib = import ./lib.nix;
     nixosModules.default = import ./wire.nix;
+    checks = forAllSystems (system: 
+      let
+        checkArgs = {
+          # reference to nixpkgs for the current system
+          pkgs = nixpkgs.legacyPackages.${system};
+          # this gives us a reference to our flake but also all flake inputs
+          inherit self;
+        };
+      in {
+      # import our test
+      null = import ./tests/null.nix checkArgs;
+    });
   };
 }
