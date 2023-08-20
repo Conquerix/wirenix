@@ -15,6 +15,9 @@
         enable = true;
         aclConfig = import ./acls/mesh.nix;
       };
+      environment.etc."wg-key" = {
+        text = "MIELhEc0I7BseAanhk/+LlY/+Yf7GK232vKWITExnEI=";
+      };
       networking.firewall.enable = false;
     };
     
@@ -26,30 +29,51 @@
         keyProviders = ["acl"];
         aclConfig = import ./acls/mesh.nix;
       };
+      environment.etc."wg-key" = {
+        text = "yG4mJiduoAvzhUJMslRbZwOp1gowSfC+wgY8B/Mul1M=";
+      };
       networking.firewall.enable = false;
     };
     
     node3 = { self, pkgs, ... }: {
       virtualisation.vlans = [ 1 ];
       imports = [ self.nixosModules.default ];      
+      systemd.network.enable = true;
       wirenix = {
         enable = true;
+        configurer = "networkd";
         keyProviders = ["acl"];
         peerName = "node3";
         aclConfig = import ./acls/mesh.nix;
       };
+      environment.etc."wg-key" = {
+        text = "yPcTvQOK9eVXQjLNapOsv2iAkbOeSzCCxlrWPMe1o0g=";
+        mode = "0640";
+        user = "root";
+        group = "systemd-network";
+      };
+      environment.systemPackages = [pkgs.wireguard-tools];
       networking.firewall.enable = false;
     };
     
     node4 = { self, pkgs, ... }: {
       virtualisation.vlans = [ 1 ];
       imports = [ self.nixosModules.default ];      
+      systemd.network.enable = true;
       wirenix = {
         enable = true;
+        configurer = "networkd";
         keyProviders = ["acl"];
         peerName = "node4";
         aclConfig = import ./acls/mesh.nix;
       };
+      environment.etc."wg-key" = {
+        text = "CLREBQ+oGXsGxhlQc3ufSoBd7MNFoM6KmMnNyuQ9S0E=";
+        mode = "0640";
+        user = "root";
+        group = "systemd-network";
+      };
+      environment.systemPackages = [pkgs.wireguard-tools];
       networking.firewall.enable = false;
     };
   };
@@ -63,8 +87,11 @@
       "node4": node4
     }
     for local_name, local_node in nodes.items():
-      for remote_node in set(nodes.keys()) - set([local_name]):
-        local_node.wait_for_unit(f"wireguard-mesh-peer-{remote_node}")
+      if local_name == "node1" or local_name == "node2":
+        for remote_node in set(nodes.keys()) - set([local_name]):
+          local_node.wait_for_unit(f"wireguard-mesh-peer-{remote_node}")
+    node3.wait_for_unit("systemd-networkd-wait-online")
+    node4.wait_for_unit("systemd-networkd-wait-online")
     for local_name, local_node in nodes.items():
       local_node.succeed("wg show >&2")
       for remote_name in set(nodes.keys()) - set([local_name]):

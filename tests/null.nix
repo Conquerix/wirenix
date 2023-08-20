@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 (import ./lib.nix) {
-  name = "Null test, should always pass";
+  name = "null test";
   nodes = {
     # `self` here is set by using specialArgs in `lib.nix`
     node1 = { self, pkgs, ... }: {

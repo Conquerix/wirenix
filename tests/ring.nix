@@ -15,6 +15,9 @@
         enable = true;
         aclConfig = import ./acls/ring.nix;
       };
+      environment.etc."wg-key" = {
+        text = "MIELhEc0I7BseAanhk/+LlY/+Yf7GK232vKWITExnEI=";
+      };
       networking.firewall.enable = false;
     };
     
@@ -25,6 +28,9 @@
         enable = true;
         keyProviders = ["acl"];
         aclConfig = import ./acls/ring.nix;
+      };
+      environment.etc."wg-key" = {
+        text = "yG4mJiduoAvzhUJMslRbZwOp1gowSfC+wgY8B/Mul1M=";
       };
       networking.firewall.enable = false;
     };
@@ -38,6 +44,9 @@
         peerName = "node3";
         aclConfig = import ./acls/ring.nix;
       };
+      environment.etc."wg-key" = {
+        text = "yPcTvQOK9eVXQjLNapOsv2iAkbOeSzCCxlrWPMe1o0g=";
+      };
       networking.firewall.enable = false;
     };
     
@@ -49,6 +58,9 @@
         keyProviders = ["acl"];
         peerName = "node4";
         aclConfig = import ./acls/ring.nix;
+      };
+      environment.etc."wg-key" = {
+        text = "CLREBQ+oGXsGxhlQc3ufSoBd7MNFoM6KmMnNyuQ9S0E=";
       };
       networking.firewall.enable = false;
     };

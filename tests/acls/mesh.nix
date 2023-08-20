@@ -24,7 +24,7 @@
         };
       };
       publicKey = "kdyzqV8cBQtDYeW6R1vUug0Oe+KaytHHDS7JoCp/kTE=";
-      privateKey = "MIELhEc0I7BseAanhk/+LlY/+Yf7GK232vKWITExnEI=";  # path is relative to the machine
+      privateKeyFile = "/etc/wg-key";
       endpoints = [
         {
           # no match can be any
@@ -40,7 +40,7 @@
         };
       };
       publicKey = "ztdAXTspQEZUNpxUbUdAhhRWbiL3YYWKSK0ZGdcsMHE=";
-      privateKey = "yG4mJiduoAvzhUJMslRbZwOp1gowSfC+wgY8B/Mul1M=";
+      privateKeyFile = "/etc/wg-key";
       endpoints = [
         {
           # no match can be any
@@ -57,7 +57,7 @@
         };
       };
       publicKey = "43tP6JgckdTFrnbYuy8a42jdNt3+wwVcb4+ae5U4ez4=";
-      privateKey = "yPcTvQOK9eVXQjLNapOsv2iAkbOeSzCCxlrWPMe1o0g=";  # path is relative to the machine
+      privateKeyFile = "/etc/wg-key";
       endpoints = [
         {
           # no match can be any
@@ -73,7 +73,7 @@
         };
       };
       publicKey = "g6+Tq9aeVfm5CXPIwZDqoTxGmsQ/TlLtxcxVn2aSiVA=";
-      privateKey = "CLREBQ+oGXsGxhlQc3ufSoBd7MNFoM6KmMnNyuQ9S0E=";
+      privateKeyFile = "/etc/wg-key";
       endpoints = [
         {
           # no match can be any

@@ -17,6 +17,9 @@
         peerName = "node1";
         aclConfig = import ./acls/simple.nix;
       };
+      environment.etc."wg-key" = {
+        text = "MIELhEc0I7BseAanhk/+LlY/+Yf7GK232vKWITExnEI=";
+      };
       networking.firewall.enable = false;
     };
     
@@ -28,6 +31,9 @@
         keyProviders = ["acl"];
         peerName = "node2";
         aclConfig = import ./acls/simple.nix;
+      };
+      environment.etc."wg-key" = {
+        text = "yG4mJiduoAvzhUJMslRbZwOp1gowSfC+wgY8B/Mul1M=";
       };
       networking.firewall.enable = false;
     };
