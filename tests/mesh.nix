@@ -1,0 +1,74 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+(import ./lib.nix)
+{
+  name = "mesh connection";
+  nodes = {
+    # `self` here is set by using specialArgs in `lib.nix`
+    node1 = { self, pkgs, ... }: {
+      virtualisation.vlans = [ 1 ];
+      imports = [ self.nixosModules.default ];      
+      wirenix = {
+        enable = true;
+        aclConfig = import ./acls/mesh.nix;
+      };
+      networking.firewall.enable = false;
+    };
+    
+    node2 = { self, pkgs, ... }: {
+      virtualisation.vlans = [ 1 ];
+      imports = [ self.nixosModules.default ];      
+      wirenix = {
+        enable = true;
+        keyProviders = ["acl"];
+        aclConfig = import ./acls/mesh.nix;
+      };
+      networking.firewall.enable = false;
+    };
+    
+    node3 = { self, pkgs, ... }: {
+      virtualisation.vlans = [ 1 ];
+      imports = [ self.nixosModules.default ];      
+      wirenix = {
+        enable = true;
+        keyProviders = ["acl"];
+        peerName = "node3";
+        aclConfig = import ./acls/mesh.nix;
+      };
+      networking.firewall.enable = false;
+    };
+    
+    node4 = { self, pkgs, ... }: {
+      virtualisation.vlans = [ 1 ];
+      imports = [ self.nixosModules.default ];      
+      wirenix = {
+        enable = true;
+        keyProviders = ["acl"];
+        peerName = "node4";
+        aclConfig = import ./acls/mesh.nix;
+      };
+      networking.firewall.enable = false;
+    };
+  };
+  # This is the test code that will check if our service is running correctly:
+  testScript = ''
+    start_all()
+    nodes = {
+      "node1": node1,
+      "node2": node2,
+      "node3": node3,
+      "node4": node4
+    }
+    for local_name, local_node in nodes.items():
+      for remote_node in set(nodes.keys()) - set([local_name]):
+        local_node.wait_for_unit(f"wireguard-mesh-peer-{remote_node}")
+    for local_name, local_node in nodes.items():
+      local_node.succeed("wg show >&2")
+      for remote_name in set(nodes.keys()) - set([local_name]):
+        local_node.succeed(f"ping -c 1 {remote_name} >&2")
+        local_node.succeed(f"ping -c 1 {remote_name}.mesh >&2")
+  '';
+}

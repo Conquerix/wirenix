@@ -24,6 +24,7 @@
       # import our test
       null = import ./tests/null.nix checkArgs;
       simple = import ./tests/simple.nix checkArgs;
+      mesh = import ./tests/mesh.nix checkArgs;
     });
   };
 }
