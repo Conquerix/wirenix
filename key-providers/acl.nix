@@ -10,5 +10,6 @@ with builtins;
 {
   getPeerPubKey = remotePeerName: attrByPath [remotePeerName "publicKey"] null intermediateConfig.peers;
   getPrivKeyFile = attrByPath [localPeerName "privateKeyFile"] null intermediateConfig.peers;
+  getPrivKey = attrByPath [localPeerName "privateKey"] null intermediateConfig.peers;
   getSubnetPSKFile = subnetName: attrByPath [subnetName "presharedKeyFile"] null intermediateConfig.subnets;
 }

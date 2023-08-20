@@ -13,8 +13,6 @@
   # This is the test code that will check if our service is running correctly:
   testScript = ''
     start_all()
-    # wait for our service to start
-    node1.wait_for_unit("hello-world-server")
     output = node1.succeed("echo Hello world")
     # Check if our webserver returns the expected result
     assert "Hello world" in output, f"'{output}' does not contain 'Hello world'"

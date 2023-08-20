@@ -35,5 +35,6 @@ with builtins;
     };
   getPeerPubKey    = remotePeerName: builtins.readFile (config.wirenix.secretsDir + /wirenix-peer-${remotePeerName}.pub);
   getPrivKeyFile   = config.age.secrets."wirenix-peer-${localPeerName}".path;
+  getPrivKey       = null;  
   getSubnetPSKFile = subnetName: config.age.secrets."wirenix-subnet-${subnetName}".path;
 }

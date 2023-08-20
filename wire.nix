@@ -30,6 +30,8 @@ let
 in
 {
   options = {
+    age = {};
+    sops = {};
     wirenix = {
       enable = mkEnableOption "wirenix";
       peerName = mkOption {

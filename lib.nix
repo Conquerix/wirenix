@@ -116,11 +116,13 @@ rec {
     let
       keyProviders = map (x: x inputs intermediateConfig peerName) keyProvidersUninitialized;
     in
-    {
+    rec {
       getPeerPubKey = otherPeerName: findFirst (x: x != null) (throw ("Wirenix: Could not find public key for " + otherPeerName))
         (map (provider: provider.getPeerPubKey otherPeerName) keyProviders);
-      getPrivKeyFile = findFirst (x: x != null) (throw ("Wirenix: Could not find private key file for " + peerName))
+      getPrivKeyFile = findFirst (x: x != null) (if getPrivKey == null then throw ("Wirenix: Could not find private key file for " + peerName) else null)
         (map (provider: provider.getPrivKeyFile) keyProviders);
+      getPrivKey = findFirst (x: x != null) (null)
+        (map (provider: provider.getPrivKey) keyProviders);
       getSubnetPSKFile = subnetName: findFirst (x: x != null) (null)
         (map (provider: provider.getSubnetPSKFile subnetName) keyProviders);
       getProviderConfig = foldl' (x: y: x // y) {} (map (provider: if provider ? config then provider.config else {}) keyProviders);

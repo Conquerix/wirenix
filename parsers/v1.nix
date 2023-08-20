@@ -17,6 +17,7 @@ let
     // mergeIf acl_peer "extraArgs"
     // mergeIf acl_peer "publicKey"
     // mergeIf acl_peer "privateKeyFile"
+    // mergeIf acl_peer "privateKey"
     // (if acl_peer ? groups then {groups = map groupFromName acl_peer.groups;} else {groups = {};});     
   
   /** parseGroup :: acl_group -> ic_group */

@@ -31,7 +31,7 @@ with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
       wireguardConfig = {
         PrivateKeyFile = getPrivKeyFile;
         ListenPort = subnetConnection.listenPort;
-      };
+      } // (if getPrivKeyFile != null then {} else {privateKey = getPrivKey;});
       wireguardPeers = forEachAttrToList subnetConnection.peerConnections (remotePeerName: peerConnection: {
         wireguardPeerConfig = {
           Endpoint = "${peerConnection.endpoint.ip}:${builtins.toString peerConnection.endpoint.port}";

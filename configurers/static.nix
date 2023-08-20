@@ -26,7 +26,8 @@ with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
       {
         ips = subnetConnection.ipAddresses;
         listenPort = subnetConnection.listenPort;
-        privateKeyFile = getPrivKeyFile;        
+        privateKeyFile = getPrivKeyFile;  
+        privateKey = getPrivKey;
         peers = forEachAttrToList subnetConnection.peerConnections (remotePeerName: peerConnection: 
           {
             name = remotePeerName;
