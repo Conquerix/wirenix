@@ -8,6 +8,8 @@
   nodes = {
     # `self` here is set by using specialArgs in `lib.nix`
     node1 = { self, pkgs, ... }: {
+      imports = [ self.nixosModules.default ];      
+      wirenix.enable = false;
     };
   };
   # This is the test code that will check if our service is running correctly:
