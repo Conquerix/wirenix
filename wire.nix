@@ -66,7 +66,7 @@ in
       };
       additionalKeyProviders = mkOption {
         default = {};
-        type = with types; attrsOf (functionTo attrs);
+        type = with types; unspecified;
         description = mdDoc ''
           Additional key providers to load, with their names being used to select them in the
           `keyProviders` option
@@ -74,7 +74,7 @@ in
       };
       additionalParsers = mkOption {
         default = {};
-        type = with types; attrsOf (functionTo attrs);
+        type = with types; unspecified;
         description = mdDoc ''
           Additional parsers to load, with their names being used to compare to the acl's
           "version" field.
@@ -82,7 +82,7 @@ in
       };
       additionalConfigurers = mkOption {
         default = {};
-        type = with types; attrsOf (functionTo attrs);
+        type = with types; unspecified;
         description = mdDoc ''
           Additional configurers to load, with their names being used to select them in the
           `configurer` option.
