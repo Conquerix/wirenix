@@ -108,7 +108,7 @@ in
   # --------------------------------------------------------------- #
   # Due to merge weirdness, I have to define what configuration keys
   # we're touching upfront, and make sure they exist
-  config = (safetyMerge ["networking" "sops" "age" "systemd" "services" "environment"]
+  config = mkIf cfg.enable (safetyMerge ["networking" "sops" "age" "systemd" "services" "environment"]
     [
       (configurer keyProviders (parser acl) cfg.peerName)
     ]

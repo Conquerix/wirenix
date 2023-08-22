@@ -1,4 +1,6 @@
 [Issue Tracker](https://todo.sr.ht/~msalerno/wirenix)  
+[Mailing List](https://lists.sr.ht/~msalerno/wirenix) ([As Email](mailto:~msalerno/wirenix@lists.sr.ht))
+
 WireNix is a Nix Flake designed to make creation of Wireguard mesh networks
 easier. The simplist and most likely layout is a full mesh network, but Wirenix
 can also support arbitrary graph topologies.  
