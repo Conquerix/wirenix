@@ -83,13 +83,13 @@ let
   /** getEndpoint :: acl_peer -> acl_peer -> ic_endpoint */
   getEndpoint = acl_subnet: acl_peerFrom: acl_peerTo:
     let
-      peersForEndpoint = endpoint: catAttrs "name" (selectPeers (if endpoint ? match then endpoint.match else []));
+      peersForEndpoint = endpoint: catAttrs "name" (selectPeers (attrByPath ["match"] [] endpoint));
       allPeerEndpoints = if acl_peerTo ? endpoints then
           (filter (endpoint: elem acl_peerFrom.name (peersForEndpoint endpoint)) acl_peerTo.endpoints)
         else [];
-      allGroupEndpoints = concatMap (acl_group: acl_group.endpoints) (intersectLists 
-        (if acl_peerTo ? groups then acl_peerTo.groups else [])
-        (if acl_peerFrom ? groups then acl_peerTo.groups else [])
+      allGroupEndpoints = concatMap (acl_group: attrByPath ["endpoints"] [] (groupFromName acl_group)) (intersectLists 
+        (attrByPath ["groups"] [] acl_peerTo)
+        (attrByPath ["groups"] [] acl_peerFrom)
       );
       allSubnetEndpoints = acl_subnet.endpoints;
       allEndpointMatches = allSubnetEndpoints ++ allGroupEndpoints ++ allPeerEndpoints;
