@@ -19,7 +19,7 @@ in
 with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
 {
   networking.extraHosts = concatStringsSep "\n" (concatLists ( concatLists (forEachAttrToList thisPeer.subnetConnections (subnetName: subnetConnection: 
-    forEachAttrToList subnetConnection.peerConnections (remotePeerName: peerConnection: forEach peerConnection.ipAddresses (ip: "${strings.removeSuffix "/64" ip} ${remotePeerName}.${subnetName}"))
+    forEachAttrToList subnetConnection.peerConnections (remotePeerName: peerConnection: forEach peerConnection.ipAddresses (ip: "${cidr2ip ip} ${remotePeerName}.${subnetName}"))
   )))); 
   networking.wireguard = {
     interfaces = forEachAttr' thisPeer.subnetConnections (subnetName: subnetConnection: nameValuePair "${head (strings.splitString "." subnetName)}"
@@ -32,7 +32,7 @@ with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
             name = remotePeerName;
             publicKey = getPeerPubKey remotePeerName;
             presharedKeyFile = getSubnetPSKFile subnetName;
-            allowedIPs = map (ip: cidr2ip ip + "/128") peerConnection.ipAddresses;
+            allowedIPs = map ( ip: cidr2ip ip + (if match ".*:.*" ip != null then "/128" else "/32")) peerConnection.ipAddresses;
             endpoint = "${peerConnection.endpoint.ip}:${builtins.toString peerConnection.endpoint.port}";
           }
           // (mergeIf peerConnection.endpoint "persistentKeepalive")
