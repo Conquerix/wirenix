@@ -20,7 +20,7 @@ in
 with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
 {
   networking.extraHosts = concatStringsSep "\n" (concatLists ( concatLists (forEachAttrToList thisPeer.subnetConnections (subnetName: subnetConnection: 
-    forEachAttrToList subnetConnection.peerConnections (remotePeerName: peerConnection: forEach peerConnection.ipAddresses (ip: "${cidr2ip ip} ${remotePeerName}.${subnetName}"))
+    forEachAttrToList subnetConnection.peerConnections (remotePeerName: peerConnection: forEach peerConnection.ipAddresses (ip: "${asIp ip} ${remotePeerName}.${subnetName}"))
   )))); 
   systemd.network = { 
     netdevs = forEachAttr' thisPeer.subnetConnections (subnetName: subnetConnection: nameValuePair "50-${shortName subnetName}" { 
@@ -37,7 +37,7 @@ with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
         wireguardPeerConfig = {
           Endpoint = "${peerConnection.endpoint.ip}:${builtins.toString peerConnection.endpoint.port}";
           PublicKey = getPeerPubKey remotePeerName;
-          AllowedIPs = map (ip: cidr2ip ip + (if match ".*:.*" ip != null then "/128" else "/32")) peerConnection.ipAddresses;
+          AllowedIPs = map (ip: asCidr ip) peerConnection.ipAddresses;
           PresharedKeyFile = getSubnetPSKFile subnetName;
         };
       }

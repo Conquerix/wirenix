@@ -127,5 +127,8 @@ rec {
     };
       
     mergeIf = attr: key: if builtins.hasAttr key attr then {"${key}" = attr."${key}";} else {};
-    cidr2ip = cidr: head (filter (item: item != []) (split "/" cidr));
+    asIp = cidr: head (filter (item: item != []) (split "/" cidr));
+    isIpv6 = ip: match ".*:.*" ip != null;
+    isCidr = cidr: match ".*/.*" cidr != null;
+    asCidr = ip: if (isCidr ip) then ip else if isIpv6 ip then ip+"/128" else ip+"/32";
 }
