@@ -90,10 +90,13 @@
       if local_name == "node1" or local_name == "node2":
         for remote_node in set(nodes.keys()) - set([local_name]):
           local_node.wait_for_unit(f"wireguard-mesh-peer-{remote_node}")
+    node1.wait_for_unit("wireguard-mesh.target")
+    node2.wait_for_unit("wireguard-mesh.target")
     node3.wait_for_unit("systemd-networkd-wait-online")
     node4.wait_for_unit("systemd-networkd-wait-online")
     for local_name, local_node in nodes.items():
-      local_node.succeed("wg show >&2")
+      local_node.succeed("wg showconf mesh >&2")
+    for local_name, local_node in nodes.items():
       for remote_name in set(nodes.keys()) - set([local_name]):
         local_node.succeed(f"ping -c 1 {remote_name} >&2")
         local_node.succeed(f"ping -c 1 {remote_name}.mesh >&2")

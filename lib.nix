@@ -85,7 +85,10 @@ rec {
   generateIPv6Subnet = subnetName: (addColonsToIPv6 (generateIPv6Prefix subnetName)) + "::/64";
   
   /** generates a full IPv6 address */
-  generateIPv6Address = subnetName: peerName: (addColonsToIPv6 ((generateIPv6Prefix subnetName) + (generateIPv6Suffix peerName))) + "/64";
+  generateIPv6Address = subnetName: peerName: (addColonsToIPv6 ((generateIPv6Prefix subnetName) + (generateIPv6Suffix peerName)));
+  
+  /** generates a full IPv6 address with cidr */
+  generateIPv6Cidr = subnetName: peerName: (addColonsToIPv6 ((generateIPv6Prefix subnetName) + (generateIPv6Suffix peerName))) + "/64";
   
   /** 
    * makes the intermediate config non-recursive, so it can be pretty printed and
@@ -130,5 +133,6 @@ rec {
     asIp = cidr: head (filter (item: item != []) (split "/" cidr));
     isIpv6 = ip: match ".*:.*" ip != null;
     isCidr = cidr: match ".*/.*" cidr != null;
-    asCidr = ip: if (isCidr ip) then ip else if isIpv6 ip then ip+"/128" else ip+"/32";
+    asCidr' = ifv6: ifv4: ip: if (isCidr ip) then ip else if isIpv6 ip then ip+"/"+ifv6 else ip+"/"+ifv6;
+    asCidr = asCidr' "128" "32";
 }

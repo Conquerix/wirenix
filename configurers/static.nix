@@ -24,7 +24,7 @@ with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
   networking.wireguard = {
     interfaces = forEachAttr' thisPeer.subnetConnections (subnetName: subnetConnection: nameValuePair "${head (strings.splitString "." subnetName)}"
       {
-        ips = subnetConnection.ipAddresses;
+        ips = map (address: (asCidr' "64" "24" address)) subnetConnection.ipAddresses;
         listenPort = subnetConnection.listenPort;
         privateKeyFile = getPrivKeyFile;  
         peers = forEachAttrToList subnetConnection.peerConnections (remotePeerName: peerConnection: 
