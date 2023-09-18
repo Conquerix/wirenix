@@ -18,8 +18,8 @@ let
 in
 with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
 {
-  networking.extraHosts = concatStringsSep "\n" (concatLists ( concatLists (forEachAttrToList thisPeer.subnetConnections (subnetName: subnetConnection: 
-    forEachAttrToList subnetConnection.peerConnections (remotePeerName: peerConnection: forEach peerConnection.ipAddresses (ip: "${asIp ip} ${remotePeerName}.${subnetName}"))
+  networking.hosts = foldl' (mergeAttrs) {} (concatLists ( concatLists (forEachAttrToList thisPeer.subnetConnections (subnetName: subnetConnection: 
+    forEachAttrToList subnetConnection.peerConnections (remotePeerName: peerConnection: forEach peerConnection.ipAddresses (ip: {"${asIp ip}" = ["${remotePeerName}.${subnetName}"];}))
   )))); 
   networking.wireguard = {
     interfaces = forEachAttr' thisPeer.subnetConnections (subnetName: subnetConnection: nameValuePair "${head (strings.splitString "." subnetName)}"

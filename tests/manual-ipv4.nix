@@ -5,7 +5,7 @@
  */
 (import ./lib.nix)
 {
-  name = "manual ipv6 connection";
+  name = "manual ipv4 connection";
   nodes = {
     # `self` here is set by using specialArgs in `lib.nix`
     node1 = { self, pkgs, ... }: {
@@ -41,13 +41,13 @@
   # This is the test code that will check if our service is running correctly:
   testScript = ''
     start_all()
-    node1.wait_for_unit("wireguard-simple-peer-node2")
-    node2.wait_for_unit("wireguard-simple-peer-node1")
+    node1.wait_for_unit("wireguard-manual-peer-node2")
+    node2.wait_for_unit("wireguard-manual-peer-node1")
     node1.succeed("ping -c 1 node2 >&2")
     node1.succeed("wg show >&2")
     node2.succeed("ping -c 1 node1 >&2")
     node2.succeed("wg show >&2")
-    node1.succeed("ping -c 1 node2.simple")
-    node2.succeed("ping -c 1 node1.simple")
+    node1.succeed("ping -c 1 node2.manual")
+    node2.succeed("ping -c 1 node1.manual")
   '';
 }

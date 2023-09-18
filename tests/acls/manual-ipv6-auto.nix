@@ -2,7 +2,7 @@
   version = "v1";
   subnets = [
     {
-      name = "manual-ipv6-auto";
+      name = "manual";
       endpoints = [
         {
           # No match mean match any
@@ -18,16 +18,15 @@
     {
       name = "node1";
       subnets = {
-        manual-ipv6-auto = {
+        manual = {
           ipAddresses = [
-            "auto"
+            "auto" # "auto" explicitly generates an ipv6 address, opposed to implicitly via not having an `ipAddresses` property
           ];
           listenPort = 51820;
         };
       };
       publicKey = "kdyzqV8cBQtDYeW6R1vUug0Oe+KaytHHDS7JoCp/kTE=";
       privateKeyFile = "/etc/wg-key";
-      #privateKey = "MIELhEc0I7BseAanhk/+LlY/+Yf7GK232vKWITExnEI=";  # path is relative to the machine
       endpoints = [
         {
           # no match can be any
@@ -38,7 +37,7 @@
     {
       name = "node2";
       subnets = {
-        manual-ipv6-auto = {
+        manual = {
           ipAddresses = [
             "auto"
           ];
@@ -47,7 +46,6 @@
       };
       publicKey = "ztdAXTspQEZUNpxUbUdAhhRWbiL3YYWKSK0ZGdcsMHE=";
       privateKeyFile = "/etc/wg-key";
-      #privateKey = "yG4mJiduoAvzhUJMslRbZwOp1gowSfC+wgY8B/Mul1M=";
       endpoints = [
         {
           # no match can be any
@@ -58,8 +56,8 @@
   ];
   connections = [
     {
-      a = [{type= "subnet"; rule = "is"; value = "manual-ipv6-auto";}];
-      b = [{type= "subnet"; rule = "is"; value = "manual-ipv6-auto";}];
+      a = [{type= "subnet"; rule = "is"; value = "manual";}];
+      b = [{type= "subnet"; rule = "is"; value = "manual";}];
     }
   ];
 }

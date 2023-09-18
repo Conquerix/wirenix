@@ -17,6 +17,7 @@
         peerName = "node1";
         aclConfig = import ./acls/simple.nix;
       };
+      # Don't do this! This is for testing only!
       environment.etc."wg-key" = {
         text = "MIELhEc0I7BseAanhk/+LlY/+Yf7GK232vKWITExnEI=";
       };

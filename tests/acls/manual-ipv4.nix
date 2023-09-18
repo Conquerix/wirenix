@@ -2,7 +2,7 @@
   version = "v1";
   subnets = [
     {
-      name = "manual-ipv4";
+      name = "manual";
       endpoints = [
         {
           # No match mean match any
@@ -18,7 +18,7 @@
     {
       name = "node1";
       subnets = {
-        manual-ipv4 = {
+        manual = {
           ipAddresses = [
             "10.0.0.1"
           ];
@@ -38,7 +38,7 @@
     {
       name = "node2";
       subnets = {
-        manual-ipv4 = {
+        manual = {
           ipAddresses = [
             "10.0.0.2"
           ];
@@ -58,8 +58,8 @@
   ];
   connections = [
     {
-      a = [{type= "subnet"; rule = "is"; value = "manual-ipv4";}];
-      b = [{type= "subnet"; rule = "is"; value = "manual-ipv4";}];
+      a = [{type= "subnet"; rule = "is"; value = "manual";}];
+      b = [{type= "subnet"; rule = "is"; value = "manual";}];
     }
   ];
 }

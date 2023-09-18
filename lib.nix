@@ -133,6 +133,6 @@ rec {
     asIp = cidr: head (filter (item: item != []) (split "/" cidr));
     isIpv6 = ip: match ".*:.*" ip != null;
     isCidr = cidr: match ".*/.*" cidr != null;
-    asCidr' = ifv6: ifv4: ip: if (isCidr ip) then ip else if isIpv6 ip then ip+"/"+ifv6 else ip+"/"+ifv6;
+    asCidr' = ifv6: ifv4: ip: if (isCidr ip) then ip else if isIpv6 ip then ip+"/"+ifv6 else ip+"/"+ifv4;
     asCidr = asCidr' "128" "32";
 }
