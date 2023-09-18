@@ -26,6 +26,9 @@
       simple = import ./tests/simple.nix checkArgs;
       mesh = import ./tests/mesh.nix checkArgs;
       ring = import ./tests/ring.nix checkArgs;
+      manual-ipv4 = import ./tests/manual-ipv4.nix checkArgs;
+      manual-ipv6 = import ./tests/manual-ipv6.nix checkArgs;
+      manual-ipv6-auto = import ./tests/manual-ipv6-auto.nix checkArgs;
     });
   };
 }

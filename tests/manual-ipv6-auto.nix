@@ -5,7 +5,7 @@
  */
 (import ./lib.nix)
 {
-  name = "simple connection";
+  name = "explicit auto ipv6 connection";
   nodes = {
     # `self` here is set by using specialArgs in `lib.nix`
     node1 = { self, pkgs, ... }: {
@@ -15,9 +15,8 @@
         enable = true;
         keyProviders = ["acl"];
         peerName = "node1";
-        aclConfig = import ./acls/simple.nix;
+        aclConfig = import ./acls/manual-ipv6-auto.nix;
       };
-      # Don't do this! This is for testing only!
       environment.etc."wg-key" = {
         text = "MIELhEc0I7BseAanhk/+LlY/+Yf7GK232vKWITExnEI=";
       };
@@ -31,7 +30,7 @@
         enable = true;
         keyProviders = ["acl"];
         peerName = "node2";
-        aclConfig = import ./acls/simple.nix;
+        aclConfig = import ./acls/manual-ipv6-auto.nix;
       };
       environment.etc."wg-key" = {
         text = "yG4mJiduoAvzhUJMslRbZwOp1gowSfC+wgY8B/Mul1M=";
@@ -42,13 +41,13 @@
   # This is the test code that will check if our service is running correctly:
   testScript = ''
     start_all()
-    node1.wait_for_unit("wireguard-simple-peer-node2")
-    node2.wait_for_unit("wireguard-simple-peer-node1")
+    node1.wait_for_unit("wireguard-manual-peer-node2")
+    node2.wait_for_unit("wireguard-manual-peer-node1")
     node1.succeed("ping -c 1 node2 >&2")
     node1.succeed("wg show >&2")
     node2.succeed("ping -c 1 node1 >&2")
     node2.succeed("wg show >&2")
-    node1.succeed("ping -c 1 node2.simple")
-    node2.succeed("ping -c 1 node1.simple")
+    node1.succeed("ping -c 1 node2.manual")
+    node2.succeed("ping -c 1 node1.manual")
   '';
 }

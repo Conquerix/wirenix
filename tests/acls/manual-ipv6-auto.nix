@@ -2,7 +2,7 @@
   version = "v1";
   subnets = [
     {
-      name = "simple";
+      name = "manual";
       endpoints = [
         {
           # No match mean match any
@@ -18,9 +18,11 @@
     {
       name = "node1";
       subnets = {
-        simple = {
+        manual = {
+          ipAddresses = [
+            "auto" # "auto" explicitly generates an ipv6 address, opposed to implicitly via not having an `ipAddresses` property
+          ];
           listenPort = 51820;
-          # empty ipAddresses will auto generate an IPv6 address
         };
       };
       publicKey = "kdyzqV8cBQtDYeW6R1vUug0Oe+KaytHHDS7JoCp/kTE=";
@@ -35,7 +37,10 @@
     {
       name = "node2";
       subnets = {
-        simple = {
+        manual = {
+          ipAddresses = [
+            "auto"
+          ];
           listenPort = 51820;
         };
       };
@@ -51,8 +56,8 @@
   ];
   connections = [
     {
-      a = [{type= "subnet"; rule = "is"; value = "simple";}];
-      b = [{type= "subnet"; rule = "is"; value = "simple";}];
+      a = [{type= "subnet"; rule = "is"; value = "manual";}];
+      b = [{type= "subnet"; rule = "is"; value = "manual";}];
     }
   ];
 }

@@ -83,8 +83,12 @@
     for local_name, local_node in nodes.items():
       for remote_name in connections[local_name]:
         local_node.wait_for_unit(f"wireguard-ring-peer-{remote_name}")
+    node1.wait_for_unit("wireguard-ring.target")
+    node2.wait_for_unit("wireguard-ring.target")
+    node3.wait_for_unit("wireguard-ring.target")
+    node4.wait_for_unit("wireguard-ring.target")
     for local_name, local_node in nodes.items():
-      local_node.succeed("wg show >&2")
+      local_node.succeed("wg showconf ring >&2")
       for remote_name in set(nodes.keys()) - set([local_name]):
         local_node.succeed(f"ping -c 1 {remote_name} >&2")
         if remote_name in connections[local_name]:
