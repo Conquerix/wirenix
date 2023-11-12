@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-(import ./lib.nix)
+(import ./lib.nix) ({wnlib}:
 {
   name = "mesh connection";
   nodes = {
@@ -95,10 +95,8 @@
     node3.wait_for_unit("systemd-networkd-wait-online")
     node4.wait_for_unit("systemd-networkd-wait-online")
     for local_name, local_node in nodes.items():
-      local_node.succeed("wg showconf mesh >&2")
-    for local_name, local_node in nodes.items():
       for remote_name in set(nodes.keys()) - set([local_name]):
         local_node.succeed(f"ping -c 1 {remote_name} >&2")
         local_node.succeed(f"ping -c 1 {remote_name}.mesh >&2")
   '';
-}
+})

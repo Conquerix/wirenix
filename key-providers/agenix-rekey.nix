@@ -4,9 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 {config, lib, ...}: intermediateConfig: localPeerName:
-with (import ../lib.nix);
-with lib.attrsets;
-with builtins;
+let wnlib = import ../lib.nix {inherit lib;}; in
+with wnlib;
+with lib;
 {
   config.age = {
     secrets = {

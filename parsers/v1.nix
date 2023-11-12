@@ -4,11 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 {lib, ...}: v1_acl: 
-with lib.attrsets;
-with lib.lists;
-with lib.trivial;
-with (import ../lib.nix);
-with builtins;
+let wnlib = import ../lib.nix {inherit lib;}; in
+with wnlib;
+with lib;
 let
   /** parsePeer :: acl_peer -> ic_peer */
   parsePeer = acl_peer: {

@@ -4,9 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 { config, lib, ... }@inputs: 
+let wnlib = import ./lib.nix {inherit lib;}; in
+with wnlib;
 with lib;
-with import ./lib.nix;
-with builtins;
 let 
   cfg = config.wirenix;
   parsers = defaultParsers // cfg.additionalParsers;
@@ -14,10 +14,10 @@ let
   availableKeyProviders = defaultKeyProviders // cfg.additionalKeyProviders;
   acl = cfg.aclConfig;
   parser = parsers."${acl.version}" inputs;
-  configurer = (getAttr cfg.configurer configurers) inputs; #config.wirenix.configurer inputs;
+  configurer = (getAttr cfg.configurer configurers) (inputs//{devNameMethod = cfg.devNameMethod;}); #config.wirenix.configurer inputs;
   keyProviders = map (providerName: getAttr providerName availableKeyProviders) cfg.keyProviders; # config.wirenix.keyProviders;
-  mkMergeTopLevel = names: attrs: attrsets.getAttrs names (
-    mapAttrs (k: v: mkMerge v) (attrsets.foldAttrs (n: a: [n] ++ a) [] attrs)
+  mkMergeTopLevel = names: attrs: getAttrs names (
+    mapAttrs (k: v: mkMerge v) (foldAttrs (n: a: [n] ++ a) [] attrs)
   );
   /** 
    *  We can merge if we want to
@@ -26,7 +26,7 @@ let
    *  Well they're, no friends of mine.
    */
   safetyMerge = possibleTopLevelKeys: attrs: 
-    (mkMergeTopLevel possibleTopLevelKeys ((lists.singleton (attrsets.genAttrs possibleTopLevelKeys (name: {})))++attrs));
+    (mkMergeTopLevel possibleTopLevelKeys ((singleton (genAttrs possibleTopLevelKeys (name: {})))++attrs));
 in
 {
   options = {
@@ -35,13 +35,22 @@ in
     wirenix = {
       enable = mkEnableOption "wirenix";
       peerName = mkOption {
-        default = config.networking.hostName;
-        defaultText = literalExpression "hostName";
+        default = config.system.name;
+        defaultText = literalExpression "config.system.name";
         example = "bernd";
-        type = types.str;
+        type = with types; str;
         description = mdDoc ''
           Name of the peer using this module, to match the name in
           `wirenix.config.peers.*.name`
+        '';
+      };
+      peerNames = mkOption {
+        default = null;
+        example = [ "container1" "container2" ];
+        type = with types; nullOr (listOf str);
+        description = mdDoc ''
+          When one host needs multiple devs for the same subnet, specify
+          multiple names manually. Overrides peerName.
         '';
       };
       configurer = mkOption {
@@ -102,15 +111,33 @@ in
           the same on all peers that need to connect to eachother
         '';
       };
+      devNameMethod = mkOption {
+        default = "short";
+        type = with types; strMatching "hash|long|short";
+        description = mdDoc ''
+          The method used to derive device names. Device names are limited to 15 characters,
+          but often times subnet names will exceed that. "hash" is the most reliable, and
+          will always create a name unique to the subnet and peer combination. "long" will
+          return the entire subnet, and "short" will return the beginning of the subnet up
+          until the first "." character.
+        '';
+      };
     };
   };
   
   # --------------------------------------------------------------- #
   # Due to merge weirdness, I have to define what configuration keys
   # we're touching upfront, and make sure they exist
-  config = mkIf cfg.enable (safetyMerge ["networking" "sops" "age" "systemd" "services" "environment"]
-    [
-      (configurer keyProviders (parser acl) cfg.peerName)
-    ]
-  );
+  config = 
+  mkIf cfg.enable (safetyMerge ["networking" "sops" "age" "systemd" "services" "environment"] (
+    if builtins.typeOf cfg.peerNames == "null" then (
+      [(configurer keyProviders (parser acl) cfg.peerName)]
+    )
+    else (
+      warnIf (cfg.devNameMethod != "hash") "Wirenix: Using multiple peerNames for devNameMethod = \"${cfg.devNameMethod}\" can (will) cause device name collisions. Please use devNameMethod = \"hash\" instead" (
+      warnIf (cfg.configurer == "static") "Wirenix: static configurer not supported with multiple peerNames. Please use networkd or networkd-dev-only instead." (
+        (map (name: (configurer keyProviders (parser acl) name)) cfg.peerNames)
+      ))
+    )
+  ));
 }

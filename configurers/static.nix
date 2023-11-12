@@ -3,18 +3,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-{lib, ...}@inputs: keyProviders: intermediateConfig: localPeerName:
-with lib.trivial;
-with lib.attrsets;
-with lib.lists;
+{lib, devNameMethod ? "short", ...}@inputs: keyProviders: intermediateConfig: localPeerName:
+let wnlib = import ../lib.nix {inherit lib;}; in
+with wnlib;
 with lib;
-with builtins;
-with import ../lib.nix;
 let
   thisPeer = intermediateConfig.peers."${localPeerName}";
   # these aren't really important, I just wanted to reverse the argument order
   forEachAttr' = flip mapAttrs'; 
   forEachAttrToList = flip mapAttrsToList; 
+  devName = getDevName devNameMethod localPeerName;
 in
 with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
 {
@@ -22,7 +20,7 @@ with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
     forEachAttrToList subnetConnection.peerConnections (remotePeerName: peerConnection: forEach peerConnection.ipAddresses (ip: {"${asIp ip}" = ["${remotePeerName}.${subnetName}"];}))
   )))); 
   networking.wireguard = {
-    interfaces = forEachAttr' thisPeer.subnetConnections (subnetName: subnetConnection: nameValuePair "${head (strings.splitString "." subnetName)}"
+    interfaces = forEachAttr' thisPeer.subnetConnections (subnetName: subnetConnection: nameValuePair (devName subnetName)
       {
         ips = map (address: (asCidr' "64" "24" address)) subnetConnection.ipAddresses;
         listenPort = subnetConnection.listenPort;

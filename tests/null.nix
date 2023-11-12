@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-(import ./lib.nix) {
+(import ./lib.nix) ({wnlib}: {
   name = "null test";
   nodes = {
     # `self` here is set by using specialArgs in `lib.nix`
@@ -19,4 +19,4 @@
     # Check if our webserver returns the expected result
     assert "Hello world" in output, f"'{output}' does not contain 'Hello world'"
   '';
-}
+})

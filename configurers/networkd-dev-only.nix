@@ -42,9 +42,5 @@ with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
       // (warnIf (peerConnection.endpoint ? dynamicEndpointRefreshRestartSeconds) "dynamicEndpointRefreshRestartSeconds not supported for networkd" {})
       );
     });
-    networks = forEachAttr' thisPeer.subnetConnections (subnetName: subnetConnection: nameValuePair "50-${devName subnetName}" { 
-      matchConfig.Name = "${devName subnetName}";
-      address = map (address: (asCidr' "64" "24" address)) subnetConnection.ipAddresses;
-    });
   };
 } // getProviderConfig

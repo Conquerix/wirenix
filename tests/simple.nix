@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-(import ./lib.nix)
+(import ./lib.nix) ({wnlib}:
 {
   name = "simple connection";
   nodes = {
@@ -51,4 +51,4 @@
     node1.succeed("ping -c 1 node2.simple")
     node2.succeed("ping -c 1 node1.simple")
   '';
-}
+})
