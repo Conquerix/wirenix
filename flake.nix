@@ -12,6 +12,7 @@
   in
   { 
     nixosModules.default = import ./wire.nix;
+    inherit wnlib;
     checks = forAllSystems (system: 
       let
         checkArgs = {
