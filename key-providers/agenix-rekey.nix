@@ -13,7 +13,7 @@ with lib;
       "wirenix-peer-${localPeerName}" = {
         owner = "root";
         mode = "640";
-        group = if config.wirenix.configurer == "networkd" then "systemd-network" else "root";
+        group = if (builtins.match ".*networkd.*" config.wirenix.configurer != null) then "systemd-network" else "root";
         rekeyFile = config.wirenix.secretsDir + /wirenix-peer- + localPeerName + ".age";
         generator.script = {pkgs, file, ...}: ''
           priv=$(${pkgs.wireguard-tools}/bin/wg genkey)
@@ -25,7 +25,7 @@ with lib;
     mapAttrs' (name: value: nameValuePair ("wirenix-subnet-${name}") {
         owner = "root";
         mode = "640";
-        group = if config.wirenix.configurer == "networkd" then "systemd-network" else "root";
+        group = if (builtins.match ".*networkd.*" config.wirenix.configurer != null) then "systemd-network" else "root";
         rekeyFile = config.wirenix.secretsDir + /wirenix-subnet- + name + ".age";
         generator.script = {pkgs, ...}: ''
           psk=$(${pkgs.wireguard-tools}/bin/wg genpsk)
