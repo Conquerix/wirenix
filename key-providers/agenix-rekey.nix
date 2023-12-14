@@ -15,6 +15,10 @@ with lib;
         mode = "640";
         group = if (builtins.match ".*networkd.*" config.wirenix.configurer != null) then "systemd-network" else "root";
         rekeyFile = config.wirenix.secretsDir + /wirenix-peer- + localPeerName + ".age";
+        generator.tags = [
+          "wirenix"
+          "wirenix.peer"
+        ];
         generator.script = {pkgs, file, ...}: ''
           priv=$(${pkgs.wireguard-tools}/bin/wg genkey)
           ${pkgs.wireguard-tools}/bin/wg pubkey <<< "$priv" > ${lib.escapeShellArg (lib.removeSuffix ".age" file + ".pub")}
@@ -27,6 +31,10 @@ with lib;
         mode = "640";
         group = if (builtins.match ".*networkd.*" config.wirenix.configurer != null) then "systemd-network" else "root";
         rekeyFile = config.wirenix.secretsDir + /wirenix-subnet- + name + ".age";
+        generator.tags = [
+          "wirenix"
+          "wirenix.subnet"
+        ];
         generator.script = {pkgs, ...}: ''
           psk=$(${pkgs.wireguard-tools}/bin/wg genpsk)
           echo "$psk"
