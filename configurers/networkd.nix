@@ -35,9 +35,8 @@ with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
           PublicKey = getPeerPubKey remotePeerName;
           AllowedIPs = map (ip: asCidr ip) peerConnection.ipAddresses;
           PresharedKeyFile = getSubnetPSKFile subnetName;
-        };
+        } // (if peerConnection.endpoint ? persistentKeepalive then {PersistentKeepalive = peerConnection.endpoint.persistentKeepalive;} else {});
       }
-      // (if peerConnection.endpoint ? persistentKeepalive then {PersistentKeepalive =  peerConnection.endpoint.persistentKeepalive;} else {})
       // (warnIf (peerConnection.endpoint ? dynamicEndpointRefreshSeconds) "dynamicEndpointRefreshSeconds not supported for networkd" {}) 
       // (warnIf (peerConnection.endpoint ? dynamicEndpointRefreshRestartSeconds) "dynamicEndpointRefreshRestartSeconds not supported for networkd" {})
       );
