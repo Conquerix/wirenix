@@ -87,18 +87,22 @@
     {
       a = [{type= "peer"; rule = "is"; value = "peer1";}];
       b = [{type= "peer"; rule = "is"; value = "peer2";}];
+      subnets = [ "ring" ];
     }
     {
       a = [{type= "peer"; rule = "is"; value = "peer2";}];
       b = [{type= "peer"; rule = "is"; value = "peer3";}];
+      subnets = [ "ring" ];
     }
     {
       a = [{type= "peer"; rule = "is"; value = "peer3";}];
       b = [{type= "peer"; rule = "is"; value = "peer4";}];
+      subnets = [ "ring" ];
     }
     {
       a = [{type= "peer"; rule = "is"; value = "peer4";}];
       b = [{type= "peer"; rule = "is"; value = "peer1";}];
+      subnets = [ "ring" ];
     }
   ];
 }

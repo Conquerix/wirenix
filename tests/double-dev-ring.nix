@@ -12,6 +12,7 @@
       virtualisation.vlans = [ 1 ];
       imports = [ self.nixosModules.default ];      
       systemd.network.enable = true;
+      networking.useDHCP = false;
       wirenix = {
         configurer = "networkd";
         devNameMethod = "hash";
@@ -33,6 +34,7 @@
       virtualisation.vlans = [ 1 ];
       imports = [ self.nixosModules.default ];
       systemd.network.enable = true;
+      networking.useDHCP = false;
       wirenix = {
         configurer = "networkd";
         devNameMethod = "hash";

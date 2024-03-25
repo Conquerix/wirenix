@@ -39,6 +39,7 @@
       virtualisation.vlans = [ 1 ];
       imports = [ self.nixosModules.default ];      
       systemd.network.enable = true;
+      networking.useDHCP = false;
       wirenix = {
         enable = true;
         configurer = "networkd";
@@ -60,6 +61,7 @@
       virtualisation.vlans = [ 1 ];
       imports = [ self.nixosModules.default ];      
       systemd.network.enable = true;
+      networking.useDHCP = false;
       wirenix = {
         enable = true;
         configurer = "networkd";
