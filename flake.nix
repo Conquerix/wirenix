@@ -31,6 +31,7 @@
       manual-ipv4 = import ./tests/manual-ipv4.nix checkArgs;
       manual-ipv6 = import ./tests/manual-ipv6.nix checkArgs;
       manual-ipv6-auto = import ./tests/manual-ipv6-auto.nix checkArgs;
+      disjointed-meshes = import ./tests/disjointed-meshes.nix checkArgs;
     });
   };
 }

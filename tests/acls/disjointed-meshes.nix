@@ -81,10 +81,12 @@
     {
       a = [{type= "subnet"; rule = "is"; value = "disjoint1";}];
       b = [{type= "subnet"; rule = "is"; value = "disjoint1";}];
+      subnets = ["disjoint1"];
     }
     {
       a = [{type= "subnet"; rule = "is"; value = "disjoint2";}];
       b = [{type= "subnet"; rule = "is"; value = "disjoint2";}];
+      subnets = ["disjoint2"];
     }
   ];
 }
