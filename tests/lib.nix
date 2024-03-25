@@ -3,7 +3,7 @@
 # The first argument to this function is the test module itself
 test:
 # These arguments are provided by `flake.nix` on import, see checkArgs
-{ pkgs, self}:
+{ pkgs, self, wnlib }:
 let
   inherit (pkgs) lib;
   # this imports the nixos library that contains our testing framework
@@ -17,5 +17,5 @@ in
   # This is useful for referencing modules or packages from your own flake
   # as well as importing from other flakes.
   node.specialArgs = { inherit self; };
-  imports = [ test ];
+  imports = [ (test {inherit wnlib;}) ];
 }).config.result

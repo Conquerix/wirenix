@@ -86,6 +86,7 @@
     {
       a = [{type= "subnet"; rule = "is"; value = "mesh";}];
       b = [{type= "subnet"; rule = "is"; value = "mesh";}];
+      subnets = [ "mesh" ];
     }
   ];
 }

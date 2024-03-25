@@ -4,9 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 {lib, ...}: intermediateConfig: localPeerName:
-with import ../lib.nix;
-with lib.attrsets;
-with builtins;
+let wnlib = import ../lib.nix {inherit lib;}; in
+with wnlib;
+with lib;
 {
   getPeerPubKey = remotePeerName: attrByPath [remotePeerName "publicKey"] null intermediateConfig.peers;
   getPrivKeyFile = attrByPath [localPeerName "privateKeyFile"] null intermediateConfig.peers;

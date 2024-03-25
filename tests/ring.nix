@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-(import ./lib.nix)
+(import ./lib.nix) ({wnlib}:
 {
   name = "ring connection";
   nodes = {
@@ -96,4 +96,4 @@
         else:
           local_node.fail(f"ping -c 1 -W 1 {remote_name}.ring")
   '';
-}
+})

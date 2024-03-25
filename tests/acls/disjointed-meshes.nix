@@ -2,11 +2,20 @@
   version = "v1";
   subnets = [
     {
-      name = "ring";
+      name = "disjoint1";
       endpoints = [
         {
           # No match mean match any
           port = 51820;
+        }
+      ];
+    }
+    {
+      name = "disjoint2";
+      endpoints = [
+        {
+          # No match mean match any
+          port = 51821;
         }
       ];
     }
@@ -18,7 +27,7 @@
     {
       name = "node1";
       subnets = {
-        ring = {
+        disjoint1 = {
           listenPort = 51820;
           # empty ipAddresses will auto generate an IPv6 address
         };
@@ -35,8 +44,11 @@
     {
       name = "node2";
       subnets = {
-        ring = {
+        disjoint1 = {
           listenPort = 51820;
+        };
+        disjoint2 = {
+          listenPort = 51821;
         };
       };
       publicKey = "ztdAXTspQEZUNpxUbUdAhhRWbiL3YYWKSK0ZGdcsMHE=";
@@ -51,12 +63,11 @@
     {
       name = "node3";
       subnets = {
-        ring = {
-          listenPort = 51820;
-          # empty ipAddresses will auto generate an IPv6 address
+        disjoint2 = {
+          listenPort = 51821;
         };
       };
-      publicKey = "43tP6JgckdTFrnbYuy8a42jdNt3+wwVcb4+ae5U4ez4=";
+      publicKey = "VR5SILc/2MkWSeGOVAJ/0Ru5H4DFheNvNUiT0fPtgiI=";
       privateKeyFile = "/etc/wg-key";
       endpoints = [
         {
@@ -65,43 +76,17 @@
         }
       ];
     }
-    {
-      name = "node4";
-      subnets = {
-        ring = {
-          listenPort = 51820;
-        };
-      };
-      publicKey = "g6+Tq9aeVfm5CXPIwZDqoTxGmsQ/TlLtxcxVn2aSiVA=";
-      privateKeyFile = "/etc/wg-key";      
-      endpoints = [
-        {
-          # no match can be any
-          ip = "node4";
-        }
-      ];
-    }
   ];
   connections = [
     {
-      a = [{type= "peer"; rule = "is"; value = "node1";}];
-      b = [{type= "peer"; rule = "is"; value = "node2";}];
-      subnets = [ "ring" ];
+      a = [{type= "subnet"; rule = "is"; value = "disjoint1";}];
+      b = [{type= "subnet"; rule = "is"; value = "disjoint1";}];
+      subnets = ["disjoint1"];
     }
     {
-      a = [{type= "peer"; rule = "is"; value = "node2";}];
-      b = [{type= "peer"; rule = "is"; value = "node3";}];
-      subnets = [ "ring" ];
-    }
-    {
-      a = [{type= "peer"; rule = "is"; value = "node3";}];
-      b = [{type= "peer"; rule = "is"; value = "node4";}];
-      subnets = [ "ring" ];
-    }
-    {
-      a = [{type= "peer"; rule = "is"; value = "node4";}];
-      b = [{type= "peer"; rule = "is"; value = "node1";}];
-      subnets = [ "ring" ];
+      a = [{type= "subnet"; rule = "is"; value = "disjoint2";}];
+      b = [{type= "subnet"; rule = "is"; value = "disjoint2";}];
+      subnets = ["disjoint2"];
     }
   ];
 }

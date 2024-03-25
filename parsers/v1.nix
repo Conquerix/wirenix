@@ -4,11 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 {lib, ...}: v1_acl: 
-with lib.attrsets;
-with lib.lists;
-with lib.trivial;
-with (import ../lib.nix);
-with builtins;
+let wnlib = import ../lib.nix {inherit lib;}; in
+with wnlib;
+with lib;
 let
   /** parsePeer :: acl_peer -> ic_peer */
   parsePeer = acl_peer: {
@@ -45,11 +43,13 @@ let
     
   /** getIpAddresses :: acl_peer -> acl_subnet -> [str] */
   getIpAddresses = acl_subnet: acl_peer: 
-    if (acl_peer.subnets."${acl_subnet.name}" ? ipAddresses) then (
-      if (elem "auto" acl_peer.subnets."${acl_subnet.name}".ipAddresses) then (
-        (remove "auto" acl_peer.subnets."${acl_subnet.name}".ipAddresses) ++ (singleton (generateIPv6Address acl_subnet.name acl_peer.name))
-      ) else acl_peer.subnets."${acl_subnet.name}".ipAddresses
-    ) else (singleton (generateIPv6Address acl_subnet.name acl_peer.name));
+    lib.throwIfNot (builtins.hasAttr acl_subnet.name acl_peer.subnets) "Tried getting the IP address for ${acl_peer.name} on subnet ${acl_subnet.name}. However, ${acl_peer.name} is not a member of ${acl_subnet.name}. It may be that you forgot to add ${acl_subnet.name} to `connections.*.subnets` in your ACL." (
+      if (acl_peer.subnets."${acl_subnet.name}" ? ipAddresses) then (
+        if (elem "auto" acl_peer.subnets."${acl_subnet.name}".ipAddresses) then (
+          (remove "auto" acl_peer.subnets."${acl_subnet.name}".ipAddresses) ++ (singleton (generateIPv6Address acl_subnet.name acl_peer.name))
+        ) else acl_peer.subnets."${acl_subnet.name}".ipAddresses
+      ) else (singleton (generateIPv6Address acl_subnet.name acl_peer.name))
+    );
   
   /** getPeerConnections :: acl_peer -> acl_subnet -> str -> peerConnection */
   getPeerConnections = acl_peerFrom: acl_subnet:
@@ -129,8 +129,8 @@ let
 
   subnetFromName = subnetName: findSingle
     (subnet: subnet.name == subnetName)
-    (throw "No subnet " + subnetName)
-    (throw "Multiply defined subnet " + subnetName)
+    (throw "No subnet " + subnetName + " when processing peer " + acl_peer)
+    (throw "Multiply defined subnet " + subnetName + " when processing peer " + acl_peer)
     v1_acl.subnets;
     
   

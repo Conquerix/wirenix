@@ -4,17 +4,21 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 {config, lib, ...}: intermediateConfig: localPeerName:
-with (import ../lib.nix);
-with lib.attrsets;
-with builtins;
+let wnlib = import ../lib.nix {inherit lib;}; in
+with wnlib;
+with lib;
 {
   config.age = {
     secrets = {
       "wirenix-peer-${localPeerName}" = {
         owner = "root";
         mode = "640";
-        group = if config.wirenix.configurer == "networkd" then "systemd-network" else "root";
+        group = if (builtins.match ".*networkd.*" config.wirenix.configurer != null) then "systemd-network" else "root";
         rekeyFile = config.wirenix.secretsDir + /wirenix-peer- + localPeerName + ".age";
+        generator.tags = [
+          "wirenix"
+          "wirenix.peer"
+        ];
         generator.script = {pkgs, file, ...}: ''
           priv=$(${pkgs.wireguard-tools}/bin/wg genkey)
           ${pkgs.wireguard-tools}/bin/wg pubkey <<< "$priv" > ${lib.escapeShellArg (lib.removeSuffix ".age" file + ".pub")}
@@ -25,8 +29,12 @@ with builtins;
     mapAttrs' (name: value: nameValuePair ("wirenix-subnet-${name}") {
         owner = "root";
         mode = "640";
-        group = if config.wirenix.configurer == "networkd" then "systemd-network" else "root";
+        group = if (builtins.match ".*networkd.*" config.wirenix.configurer != null) then "systemd-network" else "root";
         rekeyFile = config.wirenix.secretsDir + /wirenix-subnet- + name + ".age";
+        generator.tags = [
+          "wirenix"
+          "wirenix.subnet"
+        ];
         generator.script = {pkgs, ...}: ''
           psk=$(${pkgs.wireguard-tools}/bin/wg genpsk)
           echo "$psk"
