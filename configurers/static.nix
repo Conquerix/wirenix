@@ -31,7 +31,7 @@ with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
             publicKey = getPeerPubKey remotePeerName;
             presharedKeyFile = getSubnetPSKFile subnetName;
             allowedIPs = map ( ip: asCidr ip) peerConnection.ipAddresses;
-            endpoint = mkIf (peerConnection.endpoint != null) "${peerConnection.endpoint.ip}:${builtins.toString peerConnection.endpoint.port}";
+            endpoint = mkIf (peerConnection.endpoint != null && (peerConnection.endpoint ? ip) == true && (peerConnection.endpoint ? port) == true) "${peerConnection.endpoint.ip}:${builtins.toString peerConnection.endpoint.port}";
           }
           // (mergeIf peerConnection.endpoint "persistentKeepalive")
           // (mergeIf peerConnection.endpoint "dynamicEndpointRefreshSeconds")
