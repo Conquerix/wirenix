@@ -91,8 +91,8 @@ let
         (attrByPath ["groups"] [] acl_peerTo)
         (attrByPath ["groups"] [] acl_peerFrom)
       );
-      allSubnetEndpoints = acl_subnet.endpoints;
-      allEndpointMatches = allSubnetEndpoints ++ allGroupEndpoints ++ allPeerEndpoints;
+      allSubnetEndpoints = mkIf (acl_subnet ? endpoints) == true) acl_subnet.endpoints;
+      allEndpointMatches = if (acl_subnet ? endpoints) == true) then allSubnetEndpoints ++ allGroupEndpoints ++ allPeerEndpoints else allGroupEndpoints ++ allPeerEndpoints;
     in
     removeAttrs (foldl' mergeAttrs {} allEndpointMatches) [ "match" ];
   
