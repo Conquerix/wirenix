@@ -26,7 +26,7 @@ with getKeyProviderFuncs keyProviders inputs intermediateConfig localPeerName;
         listenPort = subnetConnection.listenPort;
         privateKeyFile = getPrivKeyFile;  
         peers = forEachAttrToList subnetConnection.peerConnections (remotePeerName: peerConnection: 
-          {
+          mkIf ((peerConnection.endpoint != null && peerConnection.endpoint ? ip && peerConnection.endpoint ? port) || thisPeer.isPublic){
             name = remotePeerName;
             publicKey = getPeerPubKey remotePeerName;
             presharedKeyFile = getSubnetPSKFile subnetName;
